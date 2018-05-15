@@ -77,7 +77,7 @@ if __name__ == '__main__':
                     _cmd = (u'cp %s %s' % (_f, _fn)).encode(locale.getdefaultlocale()[1])
                     """
                     # 解析文件，把数据同步到数据库
-                    _cmd = (u'python D:\\nebula\\python-proc\\doXLSX2018.py %s' % _f).encode(
+                    _cmd = (u'python D:\\PythonProc\\python-proc\\doXLSX2018.py %s' % _f).encode(
                         locale.getdefaultlocale()[1])
                     print _cmd
                     os.system(_cmd)

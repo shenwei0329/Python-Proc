@@ -142,7 +142,7 @@ class jira_handler:
         """
         if "customfield_11801" in self.issue.raw['fields'] and \
                 type(self.issue.fields.customfield_11801) is not types.NoneType:
-            return self.issue.fields.customfield_11801
+            return u'%s' % self.issue.fields.customfield_11801
         return None
 
     def get_approval_number(self):

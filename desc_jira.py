@@ -1,6 +1,10 @@
 #!/usr/local/bin/python2.7
 # -*- coding: utf-8 -*-
 #
+#   !!! 用于获取 issue 的自定义字段
+#   ===============================
+#
+
 from jira import JIRA
 from jira.client import GreenHopper
 import io
@@ -127,7 +131,10 @@ def main():
 
     # print dir(gh.sprints({}))
     # dispGreenHopper(gh)
-    issue = 'FAST-' + sys.argv[1]
+    if len(sys.argv) > 1:
+        issue = 'FAST-' + sys.argv[1]
+    else:
+        issue = 'FAST-13850'
     showField('project=FAST', issue)
     jql = "issue in  childrenOfParentRequirement('%s')" % issue
     # jql = "issue in hasRequirements() and type='task'"
@@ -148,6 +155,5 @@ def main():
 
 if __name__ == '__main__':
 
-    if len(sys.argv) > 1:
-        main()
+    main()
     fd.close()

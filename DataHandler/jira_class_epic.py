@@ -145,6 +145,16 @@ class jira_handler:
             return self.issue.fields.customfield_11801
         return None
 
+    def get_approval_number(self):
+        """
+        获取当前Issue的钉钉任务审批号
+        :return: sprint定义
+        """
+        if "customfield_11800" in self.issue.raw['fields'] and \
+                type(self.issue.fields.customfield_11800) is not types.NoneType:
+            return self.issue.fields.customfield_11800
+        return None
+
     def get_versions(self):
         _v = {}
         for _k in self.version:
@@ -307,6 +317,7 @@ class jira_handler:
                 "summary": self.issue.fields.summary,
                 "spent_time": _time['spent_time'],
                 "sprint": self.get_sprint(),
+                "approval_number": self.get_approval_number(),
                 "project_alias": self.get_project_alias(),
                 "epic_link": _epic_link,
                 "components": _components

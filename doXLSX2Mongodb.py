@@ -29,7 +29,8 @@ def doList(xlsx_handler, mongodb, _type, _op, _ncol, keys):
         if len(_i) > 0:
             _keys.append(int(_i))
 
-    # print("%s- doList ing" % time.ctime())
+    # print("%s- doList ing <%d:%d>" % (time.ctime(), _ncol, xlsx_handler.getNrows()))
+
     _rows = []
     for i in range(2, xlsx_handler.getNrows()):
         _row = xlsx_handler.getXlsxRow(i, _ncol, None)
@@ -80,28 +81,38 @@ def doList(xlsx_handler, mongodb, _type, _op, _ncol, keys):
 
 def main():
 
+    mongo_db = mongodb_class.mongoDB('ext_system')
     filename = "D:\\shenwei\\R&D-MIS-DATABASE\\ext-system\\" + sys.argv[1]
     print filename
     xlsx_handler = xlsx_class.xlsx_handler(filename)
     try:
 
-        _table, _op, _ncol, _rectype, _key = xlsx_handler.getXlsxHead()
-        if _ncol is None or _ncol == 0:
-            return True
+        _number_sheet = xlsx_handler.getSheetNumber()
+        print("> Number of sheet: %d" % _number_sheet)
 
-        if _table is None:
-            print("%s- Type invalid![None]" % time.ctime())
-            return True
+        for _n in range(_number_sheet):
 
-        _table = str(_table).lower()
-        # print("...3")
+            print("> Do sheet[%d]" % _n)
+            xlsx_handler.setSheet(_n)
 
-        """mongoDB数据库
-        """
-        mongo_db = mongodb_class.mongoDB('ext_system')
-        doList(xlsx_handler, mongo_db, _table, _op, _ncol, _key)
+            _table, _op, _ncol, _rectype, _key = xlsx_handler.getXlsxHead()
+            if _ncol is None or _ncol == 0:
+                print(">Err< <%s>" % _table)
+                return True
 
-        # print("%s- Done" % time.ctime())
+            if _table is None:
+                print("%s- Type invalid![None]" % time.ctime())
+                return True
+
+            _table = str(_table).lower()
+
+            print("> Creating [%s]" % _table)
+
+            """mongoDB数据库
+            """
+            doList(xlsx_handler, mongo_db, _table, _op, _ncol, _key)
+
+        print("%s- Done" % time.ctime())
         return True
 
     except Exception, e:

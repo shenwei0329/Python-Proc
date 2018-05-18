@@ -135,6 +135,16 @@ class jira_handler:
             # return u'%s' % self.issue.fields.customfield_10501[0].split('name=')[1].split(',')[0]
         return None
 
+    def get_project_alias(self):
+        """
+        获取当前Issue的项目别名
+        :return: sprint定义
+        """
+        if "customfield_11801" in self.issue.raw['fields'] and \
+                type(self.issue.fields.customfield_11801) is not types.NoneType:
+            return self.issue.fields.customfield_11801
+        return None
+
     def get_versions(self):
         _v = {}
         for _k in self.version:
@@ -297,6 +307,7 @@ class jira_handler:
                 "summary": self.issue.fields.summary,
                 "spent_time": _time['spent_time'],
                 "sprint": self.get_sprint(),
+                "project_alias": self.get_project_alias(),
                 "epic_link": _epic_link,
                 "components": _components
             }}

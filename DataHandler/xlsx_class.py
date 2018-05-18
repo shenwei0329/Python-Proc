@@ -24,8 +24,17 @@ class xlsx_handler:
 
     def __init__(self, pathname):
         self.data = xlrd.open_workbook(pathname)
-        self.table = self.data.sheets()[0]
+        self.tables = self.data.sheets()
+        self.table = self.tables[0]
         self.nrows = self.table.nrows
+
+    def getSheetNumber(self):
+        return len(self.tables)
+
+    def setSheet(self, n):
+        if n < len(self.tables):
+            self.table = self.tables[n]
+            self.nrows = self.table.nrows
 
     def getNrows(self):
         return self.nrows
@@ -108,7 +117,7 @@ class xlsx_handler:
         for i in range(nCol):
             _colv = self.table.row_values(1)[i]
             _col.append(_colv)
-            # print(">>>Col[%s]" % _colv)
+            print(">>> Col[%s]" % _colv)
         return _col
 
     def getXlsxRow(self, i, nCol, lastRow):

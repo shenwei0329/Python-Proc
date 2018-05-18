@@ -9,10 +9,10 @@ import types, json
 import sys
 
 options = {
-    'server': 'http://172.16.60.13:8080',
+    'server': 'http://jira.chinacloud.com.cn',
 }
 
-jira = JIRA('http://172.16.60.13:8080', basic_auth=('shenwei', 'sw64419'))
+jira = JIRA('http://jira.chinacloud.com.cn', basic_auth=('shenwei', 'sw64419'))
 gh = GreenHopper(options, basic_auth=('shenwei', 'sw64419'))
 fd = io.open('date_desc.txt', 'w+', encoding='utf-8')
 

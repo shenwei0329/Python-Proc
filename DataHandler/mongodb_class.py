@@ -24,7 +24,6 @@ class mongoDB:
         # self.mongo_client = MongoClient(host=['10.111.135.2:27017'])
         uri = 'mongodb://root:chinacloud@172.16.60.2:27017/admin'
         self.mongo_client = MongoClient(uri)
-        # self.mongo_db = self.mongo_client.FAST
         self.mongo_db = self.mongo_client.get_database(project)
         """
         2018.4.8：不再采用这种方法，不灵活。
@@ -116,3 +115,8 @@ class mongoDB:
         """
         from_datetime = datetime.datetime.strptime(str_date,'%Y-%m-%d')
         return ObjectId.from_datetime(generation_time=from_datetime)
+
+    def get_datebase(self, db):
+        self.mongo_db = self.mongo_client.get_database(db)
+
+

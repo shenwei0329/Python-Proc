@@ -25,6 +25,9 @@ import mongodb_class
 import mysql_hdr
 import logging
 
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 logging.basicConfig(level=logging.WARNING,
                     filename='/home/shenwei/log/jira_class_epic.log',
                     format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
@@ -126,7 +129,7 @@ class jira_handler:
                 if _s['state'] == 'ACTIVE':
                     return (_s['name'], _s['startDate'], _s['endDate']), _next
                 _next = (_s['name'], _s['startDate'], _s['endDate'])
-        return None
+        return None, None
 
     def get_sprint(self):
         """

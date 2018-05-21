@@ -804,10 +804,12 @@ def main(project="PRD-2017-PROJ-00003", project_alias='FAST', week_end=False, la
     sprints = jira.get_sprints()
 
     cur_sprint, next_sprint = jira.get_current_sprint()
-    current_sprint = cur_sprint[0]
-    sprint_start_date = cur_sprint[1]
-    sprint_end_date = cur_sprint[2]
-    print u"%s 从 %s 至 %s" % (current_sprint, sprint_start_date, sprint_end_date)
+    current_sprint = None
+    if cur_sprint is not None:
+        current_sprint = cur_sprint[0]
+        sprint_start_date = cur_sprint[1]
+        sprint_end_date = cur_sprint[2]
+        print u"%s 从 %s 至 %s" % (current_sprint, sprint_start_date, sprint_end_date)
 
     # 获取本里程碑内story
     # _story = mongo_db.handler("issue", "find", {'issue_type': "story", "landmark": u"%s" % _landmark})
@@ -982,7 +984,8 @@ def main(project="PRD-2017-PROJ-00003", project_alias='FAST', week_end=False, la
     _print(u'项目功能简介：%s' % _res[0][4])
     _print(u'里程碑：%s，从 %s 到 %s' % (_landmark, _startDate, _endDate))
     # _print(u'上一个阶段：%s，从 %s 至 %s' % (next_sprint[0], next_sprint[1], next_sprint[2]))
-    _print(u'当前阶段：%s，从 %s 至 %s' % (current_sprint, sprint_start_date, sprint_end_date))
+    if current_sprint is not None:
+        _print(u'当前阶段：%s，从 %s 至 %s' % (current_sprint, sprint_start_date, sprint_end_date))
 
     """需要在此插入语句"""
     _print(u"情况总览", title=True, title_lvl=1)

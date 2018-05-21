@@ -529,8 +529,10 @@ def main():
 
     _print('>>> 报告生成日期【%s】 <<<' % time.ctime(), align=WD_ALIGN_PARAGRAPH.CENTER)
 
+    """
     _print("在研产品情况", title=True, title_lvl=1)
     getPdingList(cur)
+    """
 
     _print("工程项目的支撑情况", title=True, title_lvl=1)
     pg = _print("任务明细", title=True, title_lvl=2)

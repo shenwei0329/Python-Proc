@@ -25,9 +25,8 @@ import mongodb_class
 import mysql_hdr
 import logging
 
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     filename='/home/shenwei/log/jira_class_epic.log',
-                    filemode='a',
                     format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 

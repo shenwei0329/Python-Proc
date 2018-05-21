@@ -23,6 +23,12 @@ from pymongo import MongoClient
 import mongodb_class
 
 import mysql_hdr
+import logging
+
+logging.basicConfig(level=logging.INFO,
+                    filename='/home/shenwei/log/jira_class_epic.log',
+                    filemode='w',
+                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 
 class jira_handler:
@@ -722,6 +728,8 @@ def main(project_alias=None, issue_type=None):
 
 if __name__ == '__main__':
     if len(sys.argv) == 3:
+        logging.info(">>> %s: %s ... ing", sys.argv[1], sys.argv[2])
         main(sys.argv[1], issue_type=sys.argv[2])
+        logging.info(">>> Done <<<")
     else:
         print(u"\tUsage: %s project_alias issue_type" % sys.argv[0])

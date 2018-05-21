@@ -25,7 +25,7 @@ import mongodb_class
 import mysql_hdr
 import logging
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.WARNING,
                     filename='/home/shenwei/log/jira_class_epic.log',
                     format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
@@ -727,10 +727,10 @@ def main(project_alias=None, issue_type=None):
 
 if __name__ == '__main__':
     if len(sys.argv) == 3:
-        logging.info(">>> %s: %s ... ing", sys.argv[1], sys.argv[2])
+        logging.warning(">>> %s: %s ... ing", sys.argv[1], sys.argv[2])
         try:
             main(sys.argv[1], issue_type=sys.argv[2])
-            logging.info(">>> Done <<<")
+            logging.warning(">>> Done <<<")
         except Exceptions, e:
             logging.error(":%s" % e)
     else:

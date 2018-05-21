@@ -729,7 +729,10 @@ def main(project_alias=None, issue_type=None):
 if __name__ == '__main__':
     if len(sys.argv) == 3:
         logging.info(">>> %s: %s ... ing", sys.argv[1], sys.argv[2])
-        main(sys.argv[1], issue_type=sys.argv[2])
-        logging.info(">>> Done <<<")
+        try:
+            main(sys.argv[1], issue_type=sys.argv[2])
+            logging.info(">>> Done <<<")
+        except Exceptions, e:
+            logging.error(":%s" % e)
     else:
         print(u"\tUsage: %s project_alias issue_type" % sys.argv[0])

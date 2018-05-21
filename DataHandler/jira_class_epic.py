@@ -27,7 +27,7 @@ import logging
 
 logging.basicConfig(level=logging.INFO,
                     filename='/home/shenwei/log/jira_class_epic.log',
-                    filemode='w',
+                    filemode='a',
                     format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 

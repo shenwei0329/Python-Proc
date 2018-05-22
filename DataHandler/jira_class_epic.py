@@ -656,7 +656,7 @@ def into_db(sql_service, my_jira, kv):
 
 def do_with_epic(myjira, sprints):
 
-    issue_link = myjira.scan_epic('2017-12-1')
+    issue_link = myjira.scan_epic('2018-3-1')
 
     for issue in issue_link:
 
@@ -697,18 +697,18 @@ def do_with_epic(myjira, sprints):
 
 def do_with_story(myjira, sprints):
 
-    issue_link = myjira.scan_story('2017-12-1')
+    issue_link = myjira.scan_story('2018-3-1')
     for issue in issue_link:
         myjira.set_issue_by_name(issue)
         myjira.sync_issue()
         myjira.show_issue()
         myjira.sync_worklog()
-    myjira.scan_task('2017-12-1')
+    myjira.scan_task('2018-3-1')
 
 
 def do_with_task(myjira):
 
-    myjira.scan_task('2017-12-1')
+    myjira.scan_task('2018-3-1')
 
 
 def main(project_alias=None, issue_type=None):

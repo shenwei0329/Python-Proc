@@ -11,8 +11,6 @@
 #   对程序进行“规范化”处理
 #
 
-import os
-import ConfigParser
 import sys
 from jira import JIRA
 from jira.client import GreenHopper
@@ -27,15 +25,19 @@ import mongodb_class
 import mysql_hdr
 import logging
 
-reload(sys)
-sys.setdefaultencoding('utf-8')
-
-logging.basicConfig(level=logging.WARNING,
-                    filename='/home/shenwei/log/jira_class_epic.log',
-                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+import os
+import ConfigParser
 
 config = ConfigParser.ConfigParser()
-config.read(os.path.split(os.path.realpath(__file__))[0] + '/rdm.cnf')
+config.read(os.path.split(os.path.realpath(__file__))[0] + '/../rdm.cnf')
+
+logging.basicConfig(level=logging.WARNING,
+                    filename=config.get('LOG', 'path'),
+                    format=config.get('LOG', 'format'))
+
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 
 class jira_handler:
@@ -46,9 +48,14 @@ class jira_handler:
     """
 
     def __init__(self, project_name):
+        global config
         self.mongo_db = mongodb_class.mongoDB(project_name)
-        self.jira = JIRA('http://jira.chinacloud.com.cn', basic_auth=('shenwei', 'sw64419'))
-        self.gh = GreenHopper({'server': 'http://jira.chinacloud.com.cn'}, basic_auth=('shenwei', 'sw64419'))
+        self.jira = JIRA(config.get('JIRA', 'url'),
+                         basic_auth=(config.get('JIRA', 'user'),
+                                     config.get('JIRA', 'password')))
+        self.gh = GreenHopper({'server': config.get('JIRA', 'url')},
+                              basic_auth=(config.get('JIRA', 'user'),
+                                          config.get('JIRA', 'password')))
         self.name = project_name
         self.project = self.jira.project(self.name)
         self.pj_name = u"%s" % self.project.name

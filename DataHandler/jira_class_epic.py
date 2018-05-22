@@ -11,6 +11,8 @@
 #   对程序进行“规范化”处理
 #
 
+import os
+import ConfigParser
 import sys
 from jira import JIRA
 from jira.client import GreenHopper
@@ -31,6 +33,9 @@ sys.setdefaultencoding('utf-8')
 logging.basicConfig(level=logging.WARNING,
                     filename='/home/shenwei/log/jira_class_epic.log',
                     format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+
+config = ConfigParser.ConfigParser()
+config.read(os.path.split(os.path.realpath(__file__))[0] + '/rdm.cnf')
 
 
 class jira_handler:
@@ -655,8 +660,9 @@ def into_db(sql_service, my_jira, kv):
 
 
 def do_with_epic(myjira, sprints):
+    global config
 
-    issue_link = myjira.scan_epic('2018-3-1')
+    issue_link = myjira.scan_epic(config.get('DATE', 'jira_scan_start_date'))
 
     for issue in issue_link:
 
@@ -696,19 +702,21 @@ def do_with_epic(myjira, sprints):
 
 
 def do_with_story(myjira, sprints):
+    global config
 
-    issue_link = myjira.scan_story('2018-3-1')
+    issue_link = myjira.scan_story(config.get('DATE', 'jira_scan_start_date'))
     for issue in issue_link:
         myjira.set_issue_by_name(issue)
         myjira.sync_issue()
         myjira.show_issue()
         myjira.sync_worklog()
-    myjira.scan_task('2018-3-1')
+    myjira.scan_task(config.get('DATE', 'jira_scan_start_date'))
 
 
 def do_with_task(myjira):
+    global config
 
-    myjira.scan_task('2018-3-1')
+    myjira.scan_task(config.get('DATE', 'jira_scan_start_date'))
 
 
 def main(project_alias=None, issue_type=None):

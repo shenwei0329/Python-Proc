@@ -33,7 +33,7 @@ config.read(os.path.split(os.path.realpath(__file__))[0] + '/../rdm.cnf')
 
 logging.basicConfig(level=logging.WARNING,
                     filename=config.get('LOG', 'path'),
-                    format=config.get('LOG', 'format'))
+                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 
 
 reload(sys)

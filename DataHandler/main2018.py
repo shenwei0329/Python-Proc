@@ -30,7 +30,6 @@
 import MySQLdb
 import sys
 import time
-import os
 import doPie
 import doHour
 import doBarOnTable
@@ -38,12 +37,17 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 import crWord
 import types
 import mongodb_class
+from pylab import mpl
 
+import os
+import ConfigParser
+
+config = ConfigParser.ConfigParser()
+config.read(os.path.split(os.path.realpath(__file__))[0] + '/../rdm.cnf')
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-from pylab import mpl
 mpl.rcParams['font.sans-serif'] = ['SimHei']
 
 sp_name = [u'杨飞', u'吴昱珉', u'王学凯', u'许文宝',
@@ -505,6 +509,7 @@ def main():
     """
 
     global TotalMember, orgWT, costProject, fd, st_date, ed_date, numb_days, doc, workhours
+    global config
 
     if len(sys.argv) != 4:
         print("\n\tUsage: python %s start_date end_date numb_days\n" % sys.argv[0])
@@ -523,7 +528,11 @@ def main():
     """
     doc.addHead(u'产品研发中心周报', 0, align=WD_ALIGN_PARAGRAPH.CENTER)
 
-    db = MySQLdb.connect(host="172.16.60.2", user="tk", passwd="53ZkAuoDVc8nsrVG", db="nebula", charset='utf8')
+    db = MySQLdb.connect(host=config.get('MYSQL', 'host'),
+                         user=config.get('MYSQL', 'user'),
+                         passwd=config.get('MYSQL', 'password'),
+                         db="nebula",
+                         charset='utf8')
     # db = MySQLdb.connect(host="172.16.101.117", user="root",passwd="123456", db="nebula", charset='utf8')
     cur = db.cursor()
 

@@ -121,6 +121,13 @@ class xlsx_handler:
         return _col
 
     def getXlsxRow(self, i, nCol, lastRow):
+        """
+        获取某行数据
+        :param i: 行号
+        :param nCol: 字段数
+        :param lastRow: 上一行数据
+        :return: 指定行的数据
+        """
 
         # print("%s- getXlsxRow[%d,%d]" % (time.ctime(), i, nCol))
 
@@ -151,6 +158,7 @@ class xlsx_handler:
             # print(">>>[%s]" % _r)
 
             if _r is None or len(str(_r)) == 0:
+                """用第一行的内容填充合并字段的其它单元"""
                 if lastRow is not None:
                     _r = lastRow[_i]
             # print _r

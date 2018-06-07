@@ -11,6 +11,8 @@
 #   对程序进行“规范化”处理
 #
 
+from __future__ import unicode_literals
+
 import sys
 from jira import JIRA
 from jira.client import GreenHopper
@@ -749,7 +751,7 @@ if __name__ == '__main__':
         try:
             main(sys.argv[1], issue_type=sys.argv[2])
             logging.warning(">>> Done <<<")
-        except Exceptions, e:
+        except Exception, e:
             logging.error(":%s" % e)
     else:
         print(u"\tUsage: %s project_alias issue_type" % sys.argv[0])

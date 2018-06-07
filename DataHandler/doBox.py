@@ -280,10 +280,11 @@ def doBarH(title, y_label, x_label, datas):
     return _fn
 
 
-def BurnDownChart(dots):
+def BurnDownChart(dots, project):
     """
     制作“燃尽”图
     :param dots: [['日期'，Y-值，类型],...]
+    :param project: 项目代号
     :return: 图文件存放路径
     """
 
@@ -387,7 +388,7 @@ def BurnDownChart(dots):
     plt.title(u'任务燃尽图', fontsize=12)
     plt.subplots_adjust(left=0.08, right=0.98, bottom=0.06, top=0.96)
 
-    _fn = 'pic/%s-issue-burndown.png' % time.strftime('%Y%m%d%H%M%S', time.localtime(time.time()))
+    _fn = 'D:\\GitHub\\flasky\\app\\static\\images\\%s-issue-burndown.png' % project
     if not __test:
         plt.savefig(_fn, dpi=120)
     else:
@@ -395,10 +396,11 @@ def BurnDownChart(dots):
     return _fn
 
 
-def TimeBurnDownChart(dots):
+def TimeBurnDownChart(dots, project):
     """
     制作工时“燃尽”图
     :param dots: [['日期'，Y-值],...]
+    :param project: 项目代号
     :return: 图文件存放路径
     """
 
@@ -479,7 +481,7 @@ def TimeBurnDownChart(dots):
     plt.title(u'工时燃尽图', fontsize=12)
     plt.subplots_adjust(left=0.08, right=0.98, bottom=0.06, top=0.96)
 
-    _fn = 'pic/%s-time-issue-burndown.png' % time.strftime('%Y%m%d%H%M%S', time.localtime(time.time()))
+    _fn = 'D:\\GitHub\\flasky\\app\\static\\images\\%s-time-issue-burndown.png' % project
     if not __test:
         plt.savefig(_fn, dpi=120)
     else:
@@ -613,12 +615,14 @@ def doIssueAction(issues, dots, figsize=[10, 12]):
     return _fn
 
 
-def doIssueStatus(title, xlabel, issues, dots, dots_s):
+def doIssueStatus(title, xlabel, issues, dots, dots_s, project, type):
     """
     制作“任务状态”图
     :param issues: 状态
     :param dots: 任务
     :param dots_s: 点状态，反应状态变更大小
+    :param project: 项目别名
+    :param type: 类型
     :return:
     """
 
@@ -676,7 +680,7 @@ def doIssueStatus(title, xlabel, issues, dots, dots_s):
     ax.grid(True)
     plt.subplots_adjust(left=0.10, right=0.98, bottom=0.12, top=0.96)
 
-    _fn = 'pic/%s-issue-status.png' % time.strftime('%Y%m%d%H%M%S', time.localtime(time.time()))
+    _fn = 'D:\\GitHub\\flasky\\app\\static\\images\\%s-issue-status-%s.png' % (project, type)
     if not __test:
         plt.savefig(_fn, dpi=120)
     else:

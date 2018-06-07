@@ -10,14 +10,11 @@
 #
 #
 
-import os
-import MySQLdb
 import sys
 from DataHandler import crWord
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import time
-import types
-from DataHandler import mongodb_class
+from DataHandler import PersonalStat
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -26,17 +23,31 @@ sys.setdefaultencoding('utf-8')
 """
 pj_alias = u"福田基础支撑平台"
 
-ProjectAlias = {u'产品设计组': 'CPSJ', u'云平台研发组': 'FAST',
-                u'大数据研发组': 'HUBBLE', u'系统组': 'ROOOT', u'测试组': 'TESTCENTER',
-                u'嘉兴项目': 'JX', u'甘孜州项目': 'GZ', u'四川公安': 'SCGA'}
+PdAlias = {u'产品设计组': 'CPSJ',
+           u'云平台研发组': 'FAST',
+           u'大数据研发组': 'HUBBLE',
+           u'系统组': 'ROOOT',
+           }
+
+RdmAlias = {
+           u'测试组': 'TESTCENTER',
+           u'研发管理': 'RDM',
+            }
+
+PjAlias = {u'嘉兴项目': 'JX',
+           u'甘孜州项目': 'GZ',
+           u'四川公安': 'SCGA',
+           }
 
 """定义时间区间
 """
+st_date = '2018-05-01'
+ed_date = '2018-05-31'
 days_month = 22
 numb_days = 5
 workhours = 40
-
 doc = None
+
 Topic_lvl_number = 0
 Topic = [u'一、',
          u'二、',
@@ -87,104 +98,154 @@ def _print(_str, title=False, title_lvl=0, color=None, align=None, paragrap=None
     return _paragrap
 
 
-def getPjTaskListByGroup(pg, pj_alias):
-    """
-    按组列出 项目入侵 任务。
-    :param pg: 插入点
-    :param pj_alias：项目别名
-    :return:
-    """
-
-    _print(u'任务明细如下：')
-    doc.addTable(1, 5, col_width=(2, 4, 2, 2, 2))
-    _title = (('text', u'模块'),
-              ('text', u'任务'),
-              ('text', u'耗时'),
-              ('text', u'状态'),
-              ('text', u'执行人'))
-    doc.addRow(_title)
-
-    _spent_time = 0
-    _count = 0
-
-    _total_cost = 0.
-
-    for _grp in ProjectAlias:
-
-        """mongoDB数据库
-        """
-        mongodb = mongodb_class.mongoDB(ProjectAlias[_grp])
-
-        _search = {"issue_type": u"任务",
-                   "project_alias": pj_alias,
-        }
-        _cur = mongodb.handler('issue', 'find', _search)
-
-        if _cur.count() == 0:
-            continue
-
-        for _issue in _cur:
-            _text = ()
-            for _it in ['components', 'summary', 'spent_time', 'status', 'users']:
-                if type(_issue[_it]) is not types.NoneType:
-                    if type(_issue[_it]) is not types.IntType:
-                        _text += (('text', _issue[_it]),)
-                    else:
-                        _text += (('text', "%0.2f" % (float(_issue[_it])/3600.)),)
-                        _spent_time += _issue[_it]
-                        _total_cost += (float(_issue['spent_time']) / 3600.)
-                else:
-                    _text += (('text', '-'),)
-            doc.addRow(_text)
-            _count += 1
-
-    _text = (('text', u'合计'),
-             ('text', ""),
-             ('text', "%0.2f" % (float(_spent_time)/3600.)),
-             ('text', ""),
-             ('text', "")
-             )
-    doc.addRow(_text)
-
-    print u"Total cost：", _total_cost
-    doc.setTableFont(8)
-    _print("")
-
-    _print(u"目前，产品研发资源在【%s】项目上共执行%d个工程项目任务，投入%0.2f工时。" %
-           (pj_alias, _count, float(_spent_time)/3600.),
-           paragrap=pg)
-
-    """插入分页"""
-    # doc.addPageBreak()
-
-
 def main():
     """
     人员任务执行情况汇总报告
     :return: 报告
     """
 
-    global st_date, ed_date, numb_days, doc, workhours, pj_alias
+    global doc, st_date, ed_date
+
+    if len(sys.argv) == 3:
+        st_date = sys.argv[1]
+        ed_date = sys.argv[2]
+
+    Persional = PersonalStat.Persional(st_date, ed_date)
 
     """创建word文档实例
     """
     doc = crWord.createWord()
     """写入"主题"
     """
-    doc.addHead(u'产品资源在项目上的投入日报', 0, align=WD_ALIGN_PARAGRAPH.CENTER)
+    doc.addHead(u'人员工作情况汇总', 0, align=WD_ALIGN_PARAGRAPH.CENTER)
 
     _print('>>> 报告生成日期【%s】 <<<' % time.ctime(), align=WD_ALIGN_PARAGRAPH.CENTER)
+    _print('')
 
-    _print("工程项目的支撑情况", title=True, title_lvl=1)
-    pg = _print("任务明细", title=True, title_lvl=2)
-    getPjTaskListByGroup(pg, pj_alias)
+    _print(u'统计时间段：%s 至 %s' % (st_date, ed_date))
 
-    doc.saveFile('pjday.docx')
-    _cmd = 'python doc2pdf.py pjday.docx pj-daily-%s.pdf' % time.strftime('%Y%m%d', time.localtime(time.time()))
-    os.system(_cmd)
+    _print(u"产品研发组情况", title=True, title_lvl=1)
 
-    """删除过程文件"""
-    _cmd = 'del /Q pic\\*'
+    _pg = _print(u'明细数据：')
+
+    _member_count = 0
+    for _grp in PdAlias:
+
+        Persional.clearPersional()
+
+        _print(u"【%s】组的任务执行情况" % _grp, title=True, title_lvl=2)
+
+        doc.addTable(1, 6, col_width=(2, 2, 2, 2, 2, 2))
+        _title = (('text', u'名称'),
+                  ('text', u'任务总数'),
+                  ('text', u'完成数'),
+                  ('text', u'完成率'),
+                  ('text', u'任务工时数'),
+                  ('text', u'工作日志\n记录的工时数'),
+                  )
+        doc.addRow(_title)
+
+        Persional.scanProject(PdAlias[_grp])
+
+        _member_count += Persional.getNumbOfMember()
+
+        _workhour = 0
+        _wl_workhour = 0
+
+        for _persion in Persional.getNameList():
+
+            _done, _ratio = Persional.getNumberDone(_persion)
+            _wh = Persional.getSpentTime(_persion)/3600.
+            _workhour += _wh
+
+            _wl_wh = Persional.getWorklogSpentTime(_persion)/3600.
+            _wl_workhour += _wl_wh
+
+            _text = (('text', u'%s' % _persion),
+                     ('text', '%d' % Persional.getNumbOfTask(_persion)),
+                     ('text', '%d' % _done),
+                     ('text', '%0.2f%%' % _ratio),
+                     ('text', '%0.2f' % _wh),
+                     ('text', '%0.2f' % _wl_wh),
+                     )
+            doc.addRow(_text)
+
+        _text = (('text', u"总计"),
+                 ('text', ""),
+                 ('text', ""),
+                 ('text', ""),
+                 ('text', "%0.2f" % _workhour),
+                 ('text', "%0.2f" % _wl_workhour),
+                 )
+        doc.addRow(_text)
+        doc.setTableFont(8)
+        _print("")
+
+    _print(u'产品中心总人数：%d' % _member_count, paragrap=_pg)
+
+    _print(u"项目开发组情况", title=True, title_lvl=1)
+
+    _pg = _print(u'明细数据：')
+
+    _member_count = 0
+    for _grp in PjAlias:
+
+        Persional.clearPersional()
+
+        _print(u"【%s】组的任务执行情况" % _grp, title=True, title_lvl=2)
+
+        doc.addTable(1, 6, col_width=(2, 2, 2, 2, 2, 2))
+        _title = (('text', u'名称'),
+                  ('text', u'任务总数'),
+                  ('text', u'完成数'),
+                  ('text', u'完成率'),
+                  ('text', u'任务工时数'),
+                  ('text', u'工作日志\n记录的工时数'),
+                  )
+        doc.addRow(_title)
+
+        Persional.scanProject(PjAlias[_grp])
+
+        _member_count += Persional.getNumbOfMember()
+
+        _workhour = 0
+        _wl_workhour = 0
+
+        for _persion in Persional.getNameList():
+
+            _done, _ratio = Persional.getNumberDone(_persion)
+            _wh = Persional.getSpentTime(_persion)/3600.
+            _workhour += _wh
+
+            _wl_wh = Persional.getWorklogSpentTime(_persion)/3600.
+            _wl_workhour += _wl_wh
+
+            _text = (('text', u'%s' % _persion),
+                     ('text', '%d' % Persional.getNumbOfTask(_persion)),
+                     ('text', '%d' % _done),
+                     ('text', '%0.2f%%' % _ratio),
+                     ('text', '%0.2f' % _wh),
+                     ('text', '%0.2f' % _wl_wh),
+                     )
+            doc.addRow(_text)
+
+        _text = (('text', u"总计"),
+                 ('text', ""),
+                 ('text', ""),
+                 ('text', ""),
+                 ('text', "%0.2f" % _workhour),
+                 ('text', "%0.2f" % _wl_workhour),
+                 )
+        doc.addRow(_text)
+        doc.setTableFont(8)
+        _print("")
+
+    _print(u'注册的项目开发总人数：%d' % _member_count, paragrap=_pg)
+
+    doc.saveFile('persion.docx')
+
+    import os
+    _cmd = 'python doc2pdf.py persion.docx persion-%s.pdf' % time.strftime('%Y%m%d',time.localtime(time.time()))
     os.system(_cmd)
 
 

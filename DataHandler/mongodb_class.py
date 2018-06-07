@@ -31,10 +31,11 @@ class mongoDB:
         # self.mongo_client = MongoClient(host=['10.111.135.2:27017'])
         uri = config.get('DATABASE', 'mongodb')
         self.mongo_client = MongoClient(uri)
-        self.mongo_db = self.mongo_client.get_database(project)
+        if project is not None:
+            self.mongo_db = self.mongo_client.get_database(project)
         """
         2018.4.8：不再采用这种方法，不灵活。
-        
+
         self.obj = {"project": self.mongo_db.project,
                     "issue": self.mongo_db.issue,
                     "issue_link": self.mongo_db.issue_link,
@@ -51,6 +52,9 @@ class mongoDB:
                        "find_with_sort": self._find_with_sort,
                        "find_one": self._find_one,
                        "remove": self._remove}
+
+    def setDataBbase(self, project):
+        self.mongo_db = self.mongo_client.get_database(project)
 
     @staticmethod
     def _insert(obj, *data):

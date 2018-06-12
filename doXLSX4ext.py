@@ -84,7 +84,7 @@ class XlsxHandler:
 
     def __init__(self, pathname):
 
-        logging.log(logging.WARN, "XlsxHandler __init__(%s)" % pathname)
+        # logging.log(logging.WARN, u"XlsxHandler __init__(%s)" % pathname)
 
         self.data = xlrd.open_workbook(pathname)
         self.tables = self.data.sheets()
@@ -232,7 +232,7 @@ def doList(xlsx_handler, mongodb, _type, _op, _ncol, keys):
                     _value[_c] = _row[_i]
                     _i += 1
 
-                # print _type, _value
+                print ">>> update table: ", _type
                 try:
                     if _search not in _key:
                         mongodb.handler(_type, 'update', _search, _value)
@@ -246,11 +246,12 @@ def doList(xlsx_handler, mongodb, _type, _op, _ncol, keys):
         logging.log(logging.WARN, "doList: number of record be inputted: %d" % _count)
 
 
-def main():
+def main(filename):
 
     mongo_db = mongodb_class.mongoDB('ext_system')
 
-    filename = sys.argv[1]
+    if filename is None:
+        filename = sys.argv[1]
     print filename
 
     xlsx_handler = XlsxHandler(filename)
@@ -278,7 +279,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(None)
 
 #
 # Eof

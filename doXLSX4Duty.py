@@ -244,9 +244,10 @@ def doList(xlsx_handler):
     logging.log(logging.WARN, "doList: number of record be insect: %d" % _count)
 
 
-def main():
+def main(filename):
 
-    filename = sys.argv[1]
+    if filename is None:
+        filename = sys.argv[1]
     print filename
 
     xlsx_handler = XlsxHandler(filename)
@@ -265,7 +266,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(None)
 
 #
 # Eof

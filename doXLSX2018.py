@@ -287,9 +287,10 @@ def doList(xlsx_handler, _type, _op, _ncol, _key):
                     doSQL(_sql)
 
 
-def main():
+def main(filename):
 
-    filename = sys.argv[1]
+    if filename is None:
+        filename = sys.argv[1]
     print filename
     xlsx_handler = xlsx_class.xlsx_handler(filename)
     try:
@@ -326,7 +327,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(None)
 
 #
 # Eof

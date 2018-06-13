@@ -79,12 +79,16 @@ def doList(xlsx_handler, mongodb, _type, _op, _ncol, keys):
         print "[", _count, "]"
 
 
-def main():
+def main(filename):
 
     mongo_db = mongodb_class.mongoDB('ext_system')
-    filename = "D:\\shenwei\\R&D-MIS-DATABASE\\ext-system\\" + sys.argv[1]
+
+    if filename is None:
+        filename = "D:\\shenwei\\R&D-MIS-DATABASE\\ext-system\\" + sys.argv[1]
     print filename
+
     xlsx_handler = xlsx_class.xlsx_handler(filename)
+
     try:
 
         _number_sheet = xlsx_handler.getSheetNumber()
@@ -122,7 +126,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(None)
 
 #
 # Eof

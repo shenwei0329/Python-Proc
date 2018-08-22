@@ -85,7 +85,7 @@ class mongoDB:
 
     @staticmethod
     def _remove(obj, *data):
-        return None
+        return obj.remove(*data)
 
     @staticmethod
     def get_time(ts):

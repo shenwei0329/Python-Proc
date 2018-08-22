@@ -64,6 +64,7 @@ def doList(xlsx_handler, mongodb, _type, _op, _ncol, keys):
 
                 for _c in _col:
                     _value[_c] = _row[_i]
+                    print(u"%s: %s" % (_c, _row[_i]))
                     _i += 1
 
                 # print _type, _value

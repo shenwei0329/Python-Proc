@@ -272,7 +272,7 @@ def doBarH(title, y_label, x_label, datas):
     plt.xlabel(y_label)
     plt.title(title)
     plt.yticks(ind, x_label)
-    _fn = 'pic/%s-bar.png' % time.time()
+    _fn = 'pic/%s-%s-bar.png' % (title, time.time())
     if not __test:
         savefig(_fn, dpi=120)
     else:

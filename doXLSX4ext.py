@@ -60,7 +60,7 @@ TableName = {
              u"收款方名称,开户行,账号,出差起止日期,金额,往返交通费,补助,住宿费,"
              u"其他费用,金额小计,金额小计(大写),附件,备注,": 'loan_req',
 
-             u"项目全称,项目编号,事由,付款方式,转账信息,"
+             u"项目简称,项目编号,事由,付款方式,转账信息,"
              u"收款方名称,开户行,账号,出差明细,出差起止日期,出差起止地点,往返交通费,"
              u"补助,住宿费,其他费用,金额小计,金额小计(大写),附件,备注,": 'reimbursement_req',
 
@@ -168,7 +168,8 @@ class XlsxHandler:
                 __row = __row.split('/')
                 __row = u"%d年%d月%d日" % (int(__row[0]), int(__row[1]), int(__row[2]))
             elif __ctype == 2:
-                __row = str(__row).replace('.0','')
+                __row = str(__row)
+                # __row = str(__row).replace('.0', '')
             elif __ctype == 5:
                 __row = ''
             _row.append(__row)
@@ -235,6 +236,7 @@ def doList(xlsx_handler, mongodb, _type, _op, _ncol, keys):
                 print ">>> update table: ", _type
                 try:
                     if _search not in _key:
+                        # mongodb.handler(_type, 'remove', _search)
                         mongodb.handler(_type, 'update', _search, _value)
                         _key.append(_search)
                         _count += 1
@@ -257,16 +259,19 @@ def main(filename):
     xlsx_handler = XlsxHandler(filename)
 
     try:
-        # print("...2")
+
+        logging.log(logging.WARN, ">>> 2.")
+
         _str, _ncols = xlsx_handler.getXlsxColStr()
 
         if _str not in TableName:
             print(">>> Err: [%s][%s] not be recognised" % (filename, _str))
 
         _table = TableName[_str].lower()
-        # print("...3 <%s>" % _table)
 
-        doList(xlsx_handler, mongo_db, _table, "APPEND", _ncols, range(_ncols))
+        logging.log(logging.WARN, ">>> 3.")
+
+        doList(xlsx_handler, mongo_db, _table, "APPEND", _ncols, range(3))
         print("%s- Done" % time.ctime())
         logging.log(logging.WARN, "main: Done!")
         return True

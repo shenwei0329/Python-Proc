@@ -36,6 +36,9 @@ class xlsx_handler:
             self.table = self.tables[n]
             self.nrows = self.table.nrows
 
+    def getTableName(self):
+        return self.table.name
+
     def getNrows(self):
         return self.nrows
 

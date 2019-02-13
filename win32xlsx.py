@@ -5,7 +5,7 @@ import win32con
 import win32api
 import sys
 from win32con import *
-import doXLSX4ext
+import doXLSX4tables
 
 # from __future__ import unicode_literals
 
@@ -16,35 +16,33 @@ sys.setdefaultencoding('utf-8')
 
 def fileHandler(_file):
 
-    f = open('ext_file.txt', 'r')
-    file_list = f.read()
-    f.close()
-
     _short_file = _file.split("\\")[-1]
     print "fileHandler: ", _short_file
 
-    if _short_file in file_list:
-        print "Nothing to do!( in the ext_file.txt )"
-        return
-
     if (('.xlsx' not in _short_file) and ('.xls' in _short_file)) and ('~$' not in _short_file):
-        doXLSX4ext.main(_file)
-        file_list += _short_file
-    else:
         print "Invalid file name: ", _short_file
         return
+    else:
+        if doXLSX4tables.main(_file):
+            print(u"任务情况：")
+            doXLSX4tables.printInd(doXLSX4tables.task)
+            print(u"任务来源情况：")
+            doXLSX4tables.printInd(doXLSX4tables.source)
+            print(u"计划情况：")
+            doXLSX4tables.printInd(doXLSX4tables.plan)
+            print(u"成果类型情况：")
+            doXLSX4tables.printInd(doXLSX4tables.t_type)
+            print(u"成果归属情况：")
+            doXLSX4tables.printInd(doXLSX4tables.t_base)
 
-    f = open('ext_file.txt', 'w')
-    f.write(file_list)
-    f.close()
 
 def WndProc(hwnd, msg, wParam, lParam):
 
     if msg == WM_PAINT:
         hdc,ps = win32gui.BeginPaint(hwnd)
         rect = win32gui.GetClientRect(hwnd)
-        _str = u'请把【钉钉】文件拖拽到这！'
-        win32gui.DrawText(hdc, _str, len(_str)*2, rect, DT_SINGLELINE | DT_CENTER | DT_VCENTER)
+        _str = u'请把【xlsx】文件拖拽到这！'
+        win32gui.DrawText(hdc, _str, len(_str)*2-4, rect, DT_SINGLELINE | DT_CENTER | DT_VCENTER)
         win32gui.EndPaint(hwnd, ps)
         win32gui.DragAcceptFiles(hwnd, 1)
     elif msg == WM_DESTROY:

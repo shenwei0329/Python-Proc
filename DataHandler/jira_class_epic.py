@@ -19,12 +19,12 @@ from jira.client import GreenHopper
 
 import types
 import time
-import json
-import MySQLdb
-from pymongo import MongoClient
+# import json
+# import MySQLdb
+# from pymongo import MongoClient
 import mongodb_class
 
-import mysql_hdr
+# import mysql_hdr
 import logging
 
 import os
@@ -216,8 +216,16 @@ class jira_handler:
                 "spent_time": self.issue.fields.timespent}
 
     def get_landmark(self):
+        """
+        获取里程碑信息
+        :return:
+        """
+        """2018.8.28: 因测试用fixVersions描述被测版本，故建议不采用它
+        
         if len(self.issue.fields.fixVersions) > 0:
             return u"%s" % self.issue.fields.fixVersions[0]
+        
+        """
         if len(self.issue.fields.versions) > 0:
             # print self.show_name(), " version: %s" % self.issue.fields.versions[0]
             return u"%s" % self.issue.fields.versions[0]

@@ -16,7 +16,6 @@
 
 from __future__ import unicode_literals
 
-import mongodb_class
 import sys
 import ConfigParser
 import os
@@ -28,8 +27,6 @@ print sys.getdefaultencoding()
 
 conf = ConfigParser.ConfigParser()
 conf.read(os.path.split(os.path.realpath(__file__))[0] + '/rdm.cnf')
-
-mongo_db = mongodb_class.mongoDB()
 
 """项目状态："""
 pj_state = [u'在建', u'验收', u'交付', u'发布', u'运维']

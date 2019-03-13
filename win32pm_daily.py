@@ -69,6 +69,7 @@ def fileHandler(_file):
         for para in _doc.paragraphs:
 
             _params = getParam(para.text)
+            # print _params
 
             if "Title" in para.style.name:
                 _daily['title'] = {"alias": _params[0], "project_id": _params[2]}
@@ -103,7 +104,8 @@ def fileHandler(_file):
                                                     'summary': _params[1],
                                                     'date': _params[2],
                                                     'percent': _params[3],
-                                                    'member': _params[4]
+                                                    'member': _params[4],
+                                                    'daily_date': _daily['title']['date']
                                                     })
                     elif _heading_lvl == 4:
                         if 'tomorrow' not in _daily:
@@ -111,7 +113,8 @@ def fileHandler(_file):
                         if len(_params) >= 3:
                             _daily['tomorrow'].append({'sub_id': _params[0],
                                                        'summary': _params[1],
-                                                       'date': _params[2]
+                                                       'date': _params[2],
+                                                       'daily_date': _daily['title']['date']
                                                        })
                     elif _heading_lvl == 5:
                         if 'risk' not in _daily:

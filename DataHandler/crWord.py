@@ -58,6 +58,7 @@ class createWord:
             font = _run.font
             font.color.rgb = RGBColor(color[0],color[1],color[2])
         _run.add_text(info)
+        return self.paragrap
 
     def addPic(self, pic_path, sizeof=5):
         self.paragrap = self.document.add_paragraph()

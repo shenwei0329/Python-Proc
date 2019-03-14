@@ -14,19 +14,17 @@ try:
 except Exception:
     import ConfigParser as configparser
 
-import os
 import sys
 import mongodb_class
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import DataHandler.crWord
 from pylab import mpl
+import time
 
 """设置字符集
 """
 reload(sys)
 sys.setdefaultencoding('utf-8')
-
-import time
 
 mpl.rcParams['font.sans-serif'] = ['SimHei']
 
@@ -34,12 +32,57 @@ doc = None
 oui_list = {}
 Topic = 1
 
+sp_word = [
+    u"公安厅",
+    u"公安局",
+    u"检察院",
+    u"保密局",
+    u"委办厅",
+    u"办公厅",
+    u"党政军",
+    u"政法委",
+    u"法院",
+    u"省检",
+    u"高检",
+    u"网安",
+    u"总队",
+    u"院长",
+    u"省长",
+    u"市长",
+    u"州长",
+    u"部队",
+    u"厅长",
+    u"局长",
+    u"主任",
+    u"司长",
+    u"省委",
+    u"市委",
+    u"装备",
+    u"军队",
+    u"党政",
+    u"军",
+    u"政",
+    u"委",
+    u"厅",
+    u"局",
+    u"所",
+    u"院",
+]
 
-def _print(_str, title=False, title_lvl=0, color=None, align=None, paragrap=None ):
+
+def shield_word(s):
+    _s = s
+    for _w in sp_word:
+        _s = _s.replace(_w, 'xx')
+    return _s
+
+
+def _print(_str, title=False, title_lvl=0, color=None, align=None, paragrap=None):
 
     global doc, Topic
 
-    _str = u"%s" % _str.replace('\r', '').replace('\n','')
+    _str = u"%s" % _str.replace('\r', '').replace('\n', '')
+    _str = shield_word(_str)
 
     _paragrap = None
 
@@ -58,12 +101,12 @@ def _print(_str, title=False, title_lvl=0, color=None, align=None, paragrap=None
             if paragrap is None:
                 _paragrap = doc.addText(_str, color=color, align=align)
             else:
-                doc.appendText(paragrap, _str, color=color, align=align)
+                _paragrap = doc.appendText(paragrap, _str, color=color, align=align)
         else:
             if paragrap is None:
                 _paragrap = doc.addText(_str, color=color)
             else:
-                doc.appendText(paragrap, _str, color=color)
+                _paragrap = doc.appendText(paragrap, _str, color=color)
     print(_str)
 
     return _paragrap
@@ -105,6 +148,10 @@ def main():
     _rec = db.handler("pm_daily", "find", _sql)
     print _rec.count()
 
+    _print(u"%d、本周项目工时统计" % _lvl, title=True, title_lvl=1)
+    _lvl += 1
+    _print(u"根据本周项目日报统计的各项目资源投入工时如下：")
+
     _pj = {}
     for _r in _rec:
         if _r['project_id'] not in _pj:
@@ -136,9 +183,13 @@ def main():
             _pct = '0'
         _pj[_r['project_id']]['id'][_r['id']]['percent'].append(_pct)
 
+    _work_hour = {}
+    _pg_list = None
     for _p in sorted(_pj):
 
-        _print(u"%d、%s【%s】" % (_lvl, _p, _pj[_p]['alias']), title=True, title_lvl=1)
+        _pg = _print(u"%d、%s【%s】" % (_lvl, _p, _pj[_p]['alias']), title=True, title_lvl=1)
+        if _pg_list is None:
+            _pg_list = _pg
         _lvl += 1
 
         _rec = db.handler("stage_target", "find", {'project_id': _p})
@@ -268,6 +319,7 @@ def main():
             _cnt += len(_personal)
 
         _print(u"本周工作量：%d（人天）" % _cnt, paragrap=_pg)
+        _work_hour[_p] = _cnt
 
         _print(u"三、本周风险", title=True, title_lvl=3)
 
@@ -320,7 +372,8 @@ def main():
 
         doc.addPageBreak()
 
-        # for _date in _pj[_p]['date']:
+    for _w in _work_hour:
+        _print(u"\t● %-20s：%d 人天" % (_w, _work_hour[_w]), paragrap=_pg_list)
 
     doc.saveFile('weekly_rpt.docx')
 

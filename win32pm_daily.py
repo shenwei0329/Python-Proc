@@ -110,10 +110,11 @@ def fileHandler(_file):
                     elif _heading_lvl == 4:
                         if 'tomorrow' not in _daily:
                             _daily['tomorrow'] = []
-                        if len(_params) >= 3:
+                        if len(_params) >= 4:
                             _daily['tomorrow'].append({'sub_id': _params[0],
                                                        'summary': _params[1],
                                                        'date': _params[2],
+                                                       'member': _params[3],
                                                        'daily_date': _daily['title']['date']
                                                        })
                     elif _heading_lvl == 5:
@@ -145,6 +146,8 @@ def fileHandler(_file):
                 if "Heading 1" in para.style.name:
                     if u"总体目标" in para.text:
                         _heading_lvl = 1
+                        """总体目标完成百分比"""
+                        _daily['title']['total_percent'] = _params[0]
                     elif u"阶段目标" in para.text:
                         _heading_lvl = 2
                     elif u"今日工作" in para.text:
@@ -163,9 +166,13 @@ def fileHandler(_file):
                     if _heading_lvl in [5, 6]:
                         _step += 1
 
+        """去重：是否已录入"""
         _t = mongo_db.handler("pm_daily", "find_one", _daily['title'])
         if _t is None:
+            """记录项目标题"""
             mongo_db.handler("pm_daily", "insert", _daily['title'])
+
+            """记录总体目标情况"""
             _idx = 1
             for _v in _daily['total_target']:
                 _daily['title']['_id'] = build_id([str(_idx),
@@ -178,6 +185,7 @@ def fileHandler(_file):
                     print e
                 _idx += 1
 
+            """记录阶段目标情况"""
             _idx = 1
             for _v in _daily['stage_target']:
                 _daily['title']['_id'] = build_id([str(_idx),
@@ -190,6 +198,7 @@ def fileHandler(_file):
                     print e
                 _idx += 1
 
+            """记录当天任务执行情况"""
             _idx = 1
             for _v in _daily['today']:
                 _daily['title']['_id'] = build_id([str(_idx),
@@ -202,6 +211,7 @@ def fileHandler(_file):
                     print e
                 _idx += 1
 
+            """记录明天计划"""
             _idx = 1
             if 'tomorrow' in _daily:
                 for _v in _daily['tomorrow']:
@@ -215,6 +225,7 @@ def fileHandler(_file):
                         print e
                     _idx += 1
 
+            """记录风险信息"""
             if 'risk' in _daily:
                 for _v in _daily['risk']:
                     _daily['title']['_id'] = build_id([str(_v['index']),
@@ -225,6 +236,7 @@ def fileHandler(_file):
                     except Exception, e:
                         print e
 
+            """记录问题信息"""
             if 'problem' in _daily:
                 for _v in _daily['problem']:
                     _daily['title']['_id'] = build_id([str(_v['index']),
@@ -237,6 +249,14 @@ def fileHandler(_file):
 
 
 def WndProc(hwnd, msg, wParam, lParam):
+    """
+    视窗处理
+    :param hwnd: 句柄
+    :param msg: 消息
+    :param wParam: 参数1
+    :param lParam: 参数2
+    :return: 下一个消息处理器
+    """
 
     if msg == WM_PAINT:
         hdc,ps = win32gui.BeginPaint(hwnd)
@@ -248,10 +268,14 @@ def WndProc(hwnd, msg, wParam, lParam):
     elif msg == WM_DESTROY:
         win32gui.PostQuitMessage(0)
     elif msg == WM_DROPFILES:
+        """文件拖拉消息
+        """
         hDropInfo = wParam
         filescount = win32api.DragQueryFile(hDropInfo)
         for i in range(filescount):
+            """获取文件名"""
             filename = win32api.DragQueryFile(hDropInfo, i)
+            """处理文件"""
             fileHandler(filename)
         win32api.DragFinish(hDropInfo)
 

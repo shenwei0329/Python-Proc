@@ -140,6 +140,13 @@ def main():
 
     _print('>>> 报告生成日期【%s】 <<<' % time.ctime(), align=WD_ALIGN_PARAGRAPH.CENTER)
 
+    _print(u"%d、关联图" % _lvl, title=True, title_lvl=1)
+    _lvl += 1
+
+    _fn = _path + '\\network.png'
+    doc.addPic(_fn, sizeof=6)
+    doc.addPageBreak()
+
     for _f in _file_list:
 
         _mac = _f.split('.')[0]
@@ -149,9 +156,9 @@ def main():
         _lvl += 1
 
         _fn = _path + '\\' + _f
-        doc.addPic(_fn, sizeof=3.2)
+        doc.addPic(_fn, sizeof=4.2)
 
-        if (_lvl % 2) == 1:
+        if (_lvl % 2) == 0:
             doc.addPageBreak()
 
     doc.saveFile('wifi_analysis_report.docx')

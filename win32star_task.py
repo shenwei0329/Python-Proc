@@ -5,7 +5,7 @@ import win32con
 import win32api
 import sys
 from win32con import *
-import doXLSX4ext
+import doXLSX4ext_org
 
 # from __future__ import unicode_literals
 
@@ -17,27 +17,11 @@ sys.setdefaultencoding('utf-8')
 
 def fileHandler(_file):
 
-    f = open('ext_file.txt', 'r')
-    file_list = f.read()
-    f.close()
-
-    _short_file = _file.split("\\")[-1]
-    print "fileHandler: ", _short_file
-
-    if _short_file in file_list:
-        print "Nothing to do!( in the ext_file.txt )"
-        return
-
-    if (('.xlsx' not in _short_file) and ('.xls' in _short_file)) and ('~$' not in _short_file):
-        doXLSX4ext.main(_file)
-        file_list += _short_file
+    if (('.xlsx' in _file) and ('.xls' in _file)) and ('~$' not in _file):
+        doXLSX4ext_org.main(_file)
     else:
-        print "Invalid file name: ", _short_file
+        print "Invalid file: ", _file
         return
-
-    f = open('ext_file.txt', 'w')
-    f.write(file_list)
-    f.close()
 
 
 def WndProc(hwnd, msg, wParam, lParam):
@@ -45,7 +29,7 @@ def WndProc(hwnd, msg, wParam, lParam):
     if msg == WM_PAINT:
         hdc,ps = win32gui.BeginPaint(hwnd)
         rect = win32gui.GetClientRect(hwnd)
-        _str = u'请把【钉钉】文件拖拽到这！'
+        _str = u'请把【星任务】文件拖拽到这！'
         win32gui.DrawText(hdc, _str, len(_str)*2, rect, DT_SINGLELINE | DT_CENTER | DT_VCENTER)
         win32gui.EndPaint(hwnd, ps)
         win32gui.DragAcceptFiles(hwnd, 1)

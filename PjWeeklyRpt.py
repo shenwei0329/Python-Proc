@@ -112,10 +112,10 @@ def _print(_str, title=False, title_lvl=0, color=None, align=None, paragrap=None
     return _paragrap
 
 
-def build_sql(bg_date, ed_date):
+def build_sql(field, bg_date, ed_date):
     _sql = {'$and': [
-        {'date': {'$gte': bg_date}},
-        {'date': {'$lte': ed_date}}
+        {field: {'$gte': bg_date.replace('-', '').replace('/', '')}},
+        {field: {'$lte': ed_date.replace('-', '').replace('/', '')}}
     ]}
     return _sql
 
@@ -143,7 +143,7 @@ def main():
     db = mongodb_class.mongoDB()
     db.connect_db("PM_DAILY")
 
-    _sql = build_sql(sys.argv[1], sys.argv[2])
+    _sql = build_sql("date", sys.argv[1], sys.argv[2])
 
     _rec = db.handler("pm_daily", "find", _sql)
     print _rec.count()
@@ -268,7 +268,9 @@ def main():
         _print(u"二、任务完成情况", title=True, title_lvl=3)
 
         _pg = _print(u"任务明细如下：")
-        _rec = db.handler("today_task", "find", {'project_id': _p})
+        _sql = build_sql("daily_date", sys.argv[1], sys.argv[2])
+        _sql['project_id'] = _p
+        _rec = db.handler("today_task", "find", _sql)
         _task = {}
         for _r in _rec:
             if _r['daily_date'] not in _task:
@@ -306,7 +308,9 @@ def main():
             _personal = []
             for _sub in sorted(_task[_t], key=lambda x: int(x.split('.')[1])):
                 for _data in _task[_t][_sub]:
-                    if _data['member'] not in _personal:
+                    """排除外协类、领导和资源缺失？
+                    """
+                    if ((u"外协" or u"总" or u"缺失") not in _data['member']) and (_data['member'] not in _personal):
                         _personal.append(_data['member'])
                     _text = (
                         ('text', ''),
@@ -316,6 +320,8 @@ def main():
                         ('text', _data['member']),
                     )
                     doc.addRow(_text)
+
+            """资源投入（人日）就是当天参与任务执行的人员个数"""
             _cnt += len(_personal)
 
         _print(u"本周工作量：%d（人天）" % _cnt, paragrap=_pg)

@@ -10,6 +10,10 @@
 #   2）以story关联task。
 #   对程序进行“规范化”处理
 #
+#   2019.3.25@chengdu
+#   -----------------
+#   将员工的工作日志独立记录，便于工作量核计
+#
 
 from __future__ import unicode_literals
 
@@ -52,6 +56,8 @@ class jira_handler:
     def __init__(self, project_name):
         global config
         self.mongo_db = mongodb_class.mongoDB(project_name)
+        """将工作日志独立记录"""
+        self.mongo_db_worklogs = mongodb_class.mongoDB("WORK_LOGS")
         self.jira = JIRA(config.get('JIRA', 'url'),
                          basic_auth=(config.get('JIRA', 'user'),
                                      config.get('JIRA', 'password')))
@@ -421,9 +427,11 @@ class jira_handler:
         if not info.has_key("comment"):
             return
 
+        info['project'] = self.pj_name
         _search = {'issue': info['issue'],
                    'id': info['id']}
-        self.mongo_db.handler('worklog', 'update', _search, info)
+        """记录每个员工的工作日志信息"""
+        self.mongo_db_worklogs.handler('worklog', 'update', _search, info)
 
     def clear_worklog(self, worklog_id):
         """
@@ -451,6 +459,9 @@ class jira_handler:
         :return:
         """
         worklogs = self.jira.worklogs(self.show_name())
+        if worklogs is None or len(worklogs) == 0:
+            return
+
         wl = {}
         _id = []
         for worklog in worklogs:
@@ -589,6 +600,36 @@ class jira_handler:
                 self.show_issue()
                 self.sync_issue()
                 # self.sync_changelog()
+                # self.sync_worklog()
+                task_link.append(self.show_name())
+            if len(issues) == 100:
+                total += 100
+            else:
+                break
+        return task_link
+
+    def scan_worklog(self, bg_date):
+        """
+        按 project 获取其下所有与执行相关的 issue 数据。
+        :param bg_date: 开始搜索的日期
+        :return:
+        """
+        jql_sql = u'project=%s AND ( issuetype=task OR' \
+                  u' issuetype=任务 OR' \
+                  u' issuetype=故障 OR' \
+                  u' issuetype=Bug OR' \
+                  u' issuetype=Sub-task OR' \
+                  u' issuetype=子任务 ) AND' \
+                  u' created >= %s ORDER BY created DESC' % (self.name, bg_date)
+        print jql_sql
+        total = 0
+        task_link = []
+
+        while True:
+            issues = self.jira.search_issues(jql_sql, maxResults=100, startAt=total)
+            for issue in issues:
+                self.issue = issue
+                """同步issue worklog"""
                 self.sync_worklog()
                 task_link.append(self.show_name())
             if len(issues) == 100:

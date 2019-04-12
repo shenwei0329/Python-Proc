@@ -7,10 +7,10 @@ from jira.client import GreenHopper
 import types,json
 
 options = {
-    'server': 'http://172.16.60.13:8080',
+    'server': 'http://jira.chinacloud.com.cn',
 }
 
-jira = JIRA('http://172.16.60.13:8080', basic_auth=('shenwei','sw64419'))
+jira = JIRA('http://jira.chinacloud.com.cn', basic_auth=('shenwei','sw64419'))
 gh = GreenHopper(options, basic_auth=('shenwei','sw64419'))
 
 """

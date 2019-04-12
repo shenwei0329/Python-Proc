@@ -293,21 +293,50 @@ def count(src, word):
     return _count
 
 
-def write_title():
+def write_title(bgdate, eddate):
+    """
+    写文档简介
+    :param bgdate: 起始日期
+    :param eddate: 截止日期
+    :return:
+    """
 
     _print("I、简介", title=True, title_lvl=1)
 
-    _print(u"本报告是根据每位员工个人的工作日志进行数据分析得出的，有关员工个人工作的行为特征。"
-           u"基于此分析，可较为准确地了解员工的日常工作行为，进一步了解员工的工作特质。")
+    _print(u"本报告是根据每位员工个人在%s至%s期间的工作日志进行数据分析得出的，有关员工个人工作的行为特征。"
+           u"基于此分析，可较为准确地了解员工的日常工作行为，进一步了解员工的工作特质。" % (bgdate, eddate))
     _print(u"个人工作的行为特征包括：")
     _print(u"\t1、范围分布：该员工从事的工作范围分布情况，用以了解其工作方向偏向产品和项目；")
     _print(u"\t2、主题分布：该员工日常工作的对象（名词）分布情况，用以了解其日常主要从事哪些工作内容；")
     _print(u"\t3、行为分布：该员工日常工作的行为（动词）分布情况，用以了解其日常主要有哪些工作行为表现。")
 
 
+def build_sql(field, bg_date, ed_date):
+
+    _bg = bg_date.replace('/', '-')
+    _ed = ed_date.replace('/', '-')
+
+    if len(_bg) == 8 and '-' not in _bg:
+        _bg = "%s-%s-%s" % (_bg[0:4], _bg[4:6], _bg[6:])
+    if len(_ed) == 8 and '-' not in _ed:
+        _ed = "%s-%s-%s" % (_ed[0:4], _ed[4:6], _ed[6:])
+
+    _sql = {'$and': [
+        {field: {'$gte': _bg}},
+        {field: {'$lte': _ed}}
+    ]}
+    return _sql, _bg, _ed
+
+
 def main():
     global Personals, key_object, key_active, key_depth, doc
 
+    if len(sys.argv) != 3:
+        print("\tUsage: %s bg_date ed_date\n" % sys.argv[0])
+        return
+
+    _sql, _bgdate, _eddate = build_sql("created", sys.argv[1], sys.argv[2])
+    print _sql
     _cnt = 0
 
     """创建word文档实例
@@ -319,13 +348,20 @@ def main():
 
     _print('>>> 报告生成日期【%s】 <<<' % time.ctime(), align=WD_ALIGN_PARAGRAPH.CENTER)
 
-    write_title()
+    write_title(_bgdate, _eddate)
 
-    for _job in handler.pd_list:
-        handler.mongo_db.connect_db(_job)
-        _cur = handler.mongo_db.handler("worklog", "find")
+    import mongodb_class
+    db = mongodb_class.mongoDB()
+
+    for _job in ['WORK_LOGS']:
+
+        db.connect_db(_job)
+        _cur = db.handler("worklog", "find", _sql)
+
         for _v in _cur:
             if _v.has_key('author'):
+
+                _job = _v['issue'].split('-')[0]
                 if _v['author'] not in Personals:
                     Personals[_v['author']] = {'comment': '', 'object': {}, 'active': {}, 'depth': {},
                                                'subject_pd': {}, 'subject_pj': {}, 'issues': [], 'issue': 0}
@@ -338,37 +374,23 @@ def main():
 
                 Personals[_v['author']]['issues'].append(_v['issue'])
 
-                if _job not in Personals[_v['author']]['subject_pd']:
-                    Personals[_v['author']]['subject_pd'][_job] = 0
-                Personals[_v['author']]['subject_pd'][_job] += 1
-                Personals[_v['author']]['issue'] += 1
-
-    for _job in handler.pj_list:
-        handler.mongo_db.connect_db(_job)
-        _cur = handler.mongo_db.handler("worklog", "find")
-        for _v in _cur:
-            if _v.has_key('author'):
-                if _v['author'] not in Personals:
-                    Personals[_v['author']] = {'comment': '', 'object': {}, 'active': {}, 'depth': {},
-                                               'subject_pd': {}, 'subject_pj': {}, 'issues': [], 'issue': 0}
-                Personals[_v['author']]['comment'] += _v['comment'].\
-                    replace('"', '').\
-                    replace("'", '').\
-                    replace(' ', '').\
-                    replace('\n', '').\
-                    replace('\r', '').upper()
-
-                Personals[_v['author']]['issues'].append(_v['issue'])
-
-                if _job not in Personals[_v['author']]['subject_pj']:
-                    Personals[_v['author']]['subject_pj'][_job] = 0
-                Personals[_v['author']]['subject_pj'][_job] += 1
+                if _job in handler.pd_list:
+                    if _job not in Personals[_v['author']]['subject_pd']:
+                        Personals[_v['author']]['subject_pd'][_job] = 0
+                    Personals[_v['author']]['subject_pd'][_job] += 1
+                else:
+                    if _job not in Personals[_v['author']]['subject_pj']:
+                        Personals[_v['author']]['subject_pj'][_job] = 0
+                    Personals[_v['author']]['subject_pj'][_job] += 1
                 Personals[_v['author']]['issue'] += 1
 
     """添加issue的summary信息"""
     for _p in Personals:
         for _i in Personals[_p]['issues']:
-            _cur = handler.mongo_db.handler("issue", "find_one", {"issue": _i})
+            __sql = _sql
+            __sql['issue'] = _i
+            db.connect_db(_i.split('-')[0])
+            _cur = db.handler("issue", "find_one", __sql)
             if _cur is not None:
                 Personals[_p]['comment'] += _cur['summary']
 

@@ -3,6 +3,7 @@
 # 2017.11.22：在addText中增加color参数
 #
 
+import docx
 from docx import Document
 from docx.shared import Pt
 from docx.shared import Inches
@@ -10,11 +11,14 @@ from docx.shared import RGBColor
 from docx.oxml.ns import qn
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.section import WD_ORIENT
+from docx.enum.section import WD_SECTION_START
 
 import sys
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
+
 
 class createWord:
 
@@ -69,7 +73,8 @@ class createWord:
     def addTable(self, n_rows, n_cols, col_width=None):
         self.table = self.document.add_table(rows=n_rows, cols=n_cols)
         self.table.alignment = WD_TABLE_ALIGNMENT.CENTER
-        self.table.style = 'MediumList1'
+        # self.table.style = 'MediumList1'
+        self.table.style = 'Colorful List Accent 6'
         self.rows = n_rows
         self.cols = n_cols
         self._idx = 0

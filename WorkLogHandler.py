@@ -248,13 +248,14 @@ def count(src, word):
     return _count
 
 
-def behavior_analysis(personal, bg_date, ed_date, filter=None):
+def behavior_analysis(personal, bg_date, ed_date, filter=None, mday=22):
     """
     个人工作行为分析
     :param personal: 个人
     :param bg_date: 起始日期
     :param ed_date: 截止日期
     :param filter: 项目过滤器，如"SCGA-"
+    :param mday：法定工作天数
     :return: _list，任务内容；_text，行为数据说明； _row，行为特征
     """
 
@@ -307,7 +308,8 @@ def behavior_analysis(personal, bg_date, ed_date, filter=None):
 
         if _t['issue'] not in _task[_date]:
             _task[_date][_t['issue']] = []
-        _task[_date][_t['issue']].append({"cost": _t['timeSpentSeconds'], "comment": _t['comment']})
+        _task[_date][_t['issue']].append({"cost": _t['timeSpentSeconds'],
+                                          "comment": _t['comment'].replace('\n', "").replace('\r', "")})
 
     _sum = 0.
     _count = 0
@@ -333,12 +335,21 @@ def behavior_analysis(personal, bg_date, ed_date, filter=None):
                 else:
                     _tt = ""
 
-                _list.append((
-                    ('text', ''),
-                    ('text', _tt),
-                    ('text', "%0.2f" % _vv),
-                    ('text', _v['comment'])
-                ))
+                if len(_v['comment']) > 40:
+                    _list.append((
+                        ('text', ''),
+                        ('text', _tt),
+                        ('text', "%0.2f" % _vv),
+                        ('text', _v['comment'][:40]+"...")
+                    ))
+                else:
+                    _list.append((
+                        ('text', ''),
+                        ('text', _tt),
+                        ('text', "%0.2f" % _vv),
+                        ('text', _v['comment'])
+                    ))
+
         _count += 1
         _list.append((
             ('text', ''),
@@ -352,6 +363,8 @@ def behavior_analysis(personal, bg_date, ed_date, filter=None):
         ('text', u"%d个工作日" % _count),
         ('text', "投入%0.2f个工时" % _sum),
         ('text', ''),
+        ('text', u'法定工作日占比为%0.2f%%' % (float(_count*100)/float(mday))),
+        ('text', u'日均工作 %0.2f 小时' % (_sum/_count)),
     ))
 
     for _i in _behavior['issues']:

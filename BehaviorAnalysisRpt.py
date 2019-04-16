@@ -19,6 +19,7 @@ except Exception:
 import numpy as np
 from operator import itemgetter
 import sys
+import getopt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import DataHandler.crWord
 import DataHandler.doBox
@@ -119,14 +120,10 @@ def build_sql(field, bg_date, ed_date):
     return _sql, _bg, _ed
 
 
-def main(filter=None):
+def main(filter=None, mx=False, mday=22):
     global doc
 
-    if len(sys.argv) < 3:
-        print("\tUsage: %s bg_date ed_date [project_filter]\n" % sys.argv[0])
-        return
-
-    _sql, _bgdate, _eddate = build_sql('started', sys.argv[1], sys.argv[2])
+    _sql, _bgdate, _eddate = build_sql('started', sys.argv[-2], sys.argv[-1])
 
     """创建word文档实例
     """
@@ -171,7 +168,7 @@ def main(filter=None):
         doc.addPageBreak()
         _print(_p, title=True, title_lvl=2)
 
-        _list, _text, _row = WorkLogHandler.behavior_analysis(_p, _bgdate, _eddate, filter=filter)
+        _list, _text, _row = WorkLogHandler.behavior_analysis(_p, _bgdate, _eddate, filter=filter, mday=mday)
 
         for _v in _text:
             _print(_v)
@@ -192,22 +189,58 @@ def main(filter=None):
         doc.addRow(_title)
         doc.addRow(_row[1])
 
-        _print(u"三、工作内容")
-        doc.addTable(1, 4, col_width=(1, 1, 1, 2))
-        _title = (('text', u'日期'),
-                  ('text', u'任务'),
-                  ('text', u'工时'),
-                  ('text', u'内容'),
-                  )
-        doc.addRow(_title)
-        for _v in _list:
-            doc.addRow(_v)
+        if mx:
+            _print(u"三、工作明细")
+            doc.addTable(1, 4, col_width=(1, 1, 1, 3))
+            _title = (('text', u'日期'),
+                      ('text', u'任务'),
+                      ('text', u'工时'),
+                      ('text', u'内容'),
+                      )
+            doc.addRow(_title)
+            for _v in _list:
+                doc.addRow(_v)
+        else:
+            _print(u"三、工作特性")
+            _print(u"%s执行%s，%s；%s，%s" % (
+                _list[-1][0][1],
+                _list[-1][1][1],
+                _list[-1][4][1],
+                _list[-1][2][1],
+                _list[-1][5][1]))
 
     doc.saveFile('behavior_analysis_report.docx')
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 4:
-        main(filter=sys.argv[3])
-    else:
-        main()
+
+    _cmd_line = '\tUsage: %s [-h] [-d] [-m <M>] [-f <Filter>] be-date ed-date\n'
+
+    if len(sys.argv)<3:
+        print _cmd_line % sys.argv[0]
+        sys.exit(1)
+
+    _has_mx = False
+    _filter = None
+    _m = 22
+
+    try:
+         opts, args = getopt.getopt(sys.argv[1:-2], "hdm:f:", [])
+    except getopt.GetoptError:
+        print sys.argv[1:-2]
+        print "Error: \n", _cmd_line % sys.argv[0]
+        sys.exit(2)
+
+    for opt, arg in opts:
+
+        if opt == '-h':
+            print _cmd_line % sys.argv[0]
+            sys.exit()
+        elif opt == '-d':
+            _has_mx = True
+        elif opt == '-m':
+            _m = arg
+        elif opt == '-f':
+            _filter = arg
+
+    main(filter=_filter, mx=_has_mx, mday=_m)

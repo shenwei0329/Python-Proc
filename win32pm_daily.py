@@ -85,7 +85,9 @@ def fileHandler(_file):
                             _daily['total_target'].append({'id': _params[0],
                                                            'summary': _params[1],
                                                            'date': _params[2],
-                                                           'percent': _params[3]})
+                                                           'percent': _params[3],
+                                                           'daily_date': _daily['title']['date']
+                                                           })
                     elif _heading_lvl == 2:
                         if 'stage_target' not in _daily:
                             _daily['stage_target'] = []
@@ -94,7 +96,8 @@ def fileHandler(_file):
                                                            'id': _params[1],
                                                            'summary': _params[2],
                                                            'date': _params[3],
-                                                           'percent': _params[4]
+                                                           'percent': _params[4],
+                                                           'daily_date': _daily['title']['date']
                                                            })
                     elif _heading_lvl == 3:
                         if 'today' not in _daily:

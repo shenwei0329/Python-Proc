@@ -118,7 +118,7 @@ def main():
 
     _lvl = 1
 
-    _path = "D:\\PythonProc\\ai_home\\wifi_probe_date\\%s" % sys.argv[1]
+    _path = "D:\\PythonProc\\wifi_probe_datas\\wifi_probe_date\\%s" % sys.argv[1]
 
     _file_list = []
     _err = False

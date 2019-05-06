@@ -46,12 +46,22 @@ def build_id(params):
     return uuid.uuid3(uuid.NAMESPACE_DNS, str(_h))
 
 
-def fileHandler(_file):
+def show_message(hwnd, msg):
+    """
+    显示“消息”提示窗口
+    :param hwnd: 窗口句柄
+    :param msg: 消息
+    :return:
+    """
+    win32api.MessageBox(hwnd, msg)
+
+
+def fileHandler(hwnd, _file):
 
     _short_file = _file.split("\\")[-1]
     print "fileHandler: ", _short_file
 
-    if (('.docx' not in _short_file) and ('.doc' in _short_file)):
+    if ('.docx' not in _short_file) and ('.doc' in _short_file):
         print "Invalid file name: ", _short_file
         return
     else:
@@ -69,7 +79,9 @@ def fileHandler(_file):
         for para in _doc.paragraphs:
 
             _params = getParam(para.text)
-            # print _params
+            if para.style.name in "List Paragraph":
+                show_message(hwnd, u"文档正文格式错误！")
+                return
 
             if "Title" in para.style.name:
                 _daily['title'] = {"alias": _params[0], "project_id": _params[2]}
@@ -85,7 +97,10 @@ def fileHandler(_file):
                             _daily['total_target'].append({'id': _params[0],
                                                            'summary': _params[1],
                                                            'date': _params[2],
-                                                           'percent': _params[3]})
+                                                           'percent': _params[3],
+                                                           'daily_date': _daily['title']['date']
+                                                           }),
+
                     elif _heading_lvl == 2:
                         if 'stage_target' not in _daily:
                             _daily['stage_target'] = []
@@ -94,7 +109,8 @@ def fileHandler(_file):
                                                            'id': _params[1],
                                                            'summary': _params[2],
                                                            'date': _params[3],
-                                                           'percent': _params[4]
+                                                           'percent': _params[4],
+                                                           'daily_date': _daily['title']['date']
                                                            })
                     elif _heading_lvl == 3:
                         if 'today' not in _daily:
@@ -276,7 +292,7 @@ def WndProc(hwnd, msg, wParam, lParam):
             """获取文件名"""
             filename = win32api.DragQueryFile(hDropInfo, i)
             """处理文件"""
-            fileHandler(filename)
+            fileHandler(hwnd, filename)
         win32api.DragFinish(hDropInfo)
 
     return win32gui.DefWindowProc(hwnd,msg,wParam,lParam)  

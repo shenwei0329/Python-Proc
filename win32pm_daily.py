@@ -46,12 +46,17 @@ def build_id(params):
     return uuid.uuid3(uuid.NAMESPACE_DNS, str(_h))
 
 
-def fileHandler(_file):
+def show_message(hwnd, msg):
+
+    win32api.MessageBox(hwnd, msg)
+
+
+def fileHandler(hwnd, _file):
 
     _short_file = _file.split("\\")[-1]
     print "fileHandler: ", _short_file
 
-    if (('.docx' not in _short_file) and ('.doc' in _short_file)):
+    if ('.docx' not in _short_file) and ('.doc' in _short_file):
         print "Invalid file name: ", _short_file
         return
     else:
@@ -69,6 +74,10 @@ def fileHandler(_file):
         for para in _doc.paragraphs:
 
             _params = getParam(para.text)
+            if para.style.name in "List Paragraph":
+                show_message(hwnd, u"文档正文格式错误！")
+                return
+
             # print _params
 
             if "Title" in para.style.name:
@@ -81,17 +90,30 @@ def fileHandler(_file):
                     elif _heading_lvl == 1:
                         if 'total_target' not in _daily:
                             _daily['total_target'] = []
-                        if len(_params) >= 4:
+                        if len(_params) == 4:
                             _daily['total_target'].append({'id': _params[0],
                                                            'summary': _params[1],
                                                            'date': _params[2],
                                                            'percent': _params[3],
                                                            'daily_date': _daily['title']['date']
                                                            })
+                        elif len(_params) == 6:
+                            _daily['total_target'].append({'id': _params[0],
+                                                           'summary': _params[1],
+                                                           'requirement': _params[2],
+                                                           'method': _params[3],
+                                                           'date': _params[4],
+                                                           'percent': _params[5],
+                                                           'daily_date': _daily['title']['date']
+                                                           })
+                        else:
+                            show_message(hwnd, u"文档正文【目标】格式错误！")
+                            return
+
                     elif _heading_lvl == 2:
                         if 'stage_target' not in _daily:
                             _daily['stage_target'] = []
-                        if len(_params) >= 5:
+                        if len(_params) == 5:
                             _daily['stage_target'].append({'sub_id': _params[0],
                                                            'id': _params[1],
                                                            'summary': _params[2],
@@ -99,6 +121,20 @@ def fileHandler(_file):
                                                            'percent': _params[4],
                                                            'daily_date': _daily['title']['date']
                                                            })
+                        elif len(_params) == 7:
+                            _daily['stage_target'].append({'sub_id': _params[0],
+                                                           'id': _params[1],
+                                                           'summary': _params[2],
+                                                           'requirement': _params[3],
+                                                           'method': _params[4],
+                                                           'date': _params[5],
+                                                           'percent': _params[6],
+                                                           'daily_date': _daily['title']['date']
+                                                           })
+                        else:
+                            show_message(hwnd, u"文档正文【阶段目标】格式错误！")
+                            return
+
                     elif _heading_lvl == 3:
                         if 'today' not in _daily:
                             _daily['today'] = []
@@ -129,7 +165,11 @@ def fileHandler(_file):
                             elif u"应对" in _params[0]:
                                 _way = _params[1].replace(":", "").replace("：", "")
                                 if len(_desc) > 0 or len(_way) > 0:
-                                    _daily['risk'].append({"index": _step, "desc": _desc, "way": _way})
+                                    _daily['risk'].append({"index": _step,
+                                                           "desc": _desc,
+                                                           "way": _way,
+                                                           'daily_date': _daily['title']['date']
+                                                           })
                     elif _heading_lvl == 6:
                         if 'problem' not in _daily:
                             _daily['problem'] = []
@@ -139,7 +179,11 @@ def fileHandler(_file):
                             elif u"应对" in _params[0]:
                                 _way = _params[1].replace(":", "").replace("：", "")
                                 if len(_desc) > 0 or len(_way) > 0:
-                                    _daily['problem'].append({"index": _step, "desc": _desc, "way": _way})
+                                    _daily['problem'].append({"index": _step,
+                                                              "desc": _desc,
+                                                              "way": _way,
+                                                              'daily_date': _daily['title']['date']
+                                                              })
                     elif _heading_lvl == 7:
                         if 'other' not in _daily:
                             _daily['other'] = []
@@ -279,7 +323,7 @@ def WndProc(hwnd, msg, wParam, lParam):
             """获取文件名"""
             filename = win32api.DragQueryFile(hDropInfo, i)
             """处理文件"""
-            fileHandler(filename)
+            fileHandler(hwnd, filename)
         win32api.DragFinish(hDropInfo)
 
     return win32gui.DefWindowProc(hwnd,msg,wParam,lParam)  

@@ -11,6 +11,10 @@ from __future__ import unicode_literals
 import sys
 from DataHandler import mongodb_class
 
+import xlrd
+import time
+from datetime import datetime
+
 import logging
 logging.basicConfig(format='%(asctime)s --%(lineno)s -- %(levelname)s:%(message)s',
                     filename='doXLSX4ext.log', level=logging.WARN)
@@ -20,9 +24,11 @@ logging.basicConfig(format='%(asctime)s --%(lineno)s -- %(levelname)s:%(message)
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-import xlrd
-import time
-from datetime import datetime
+special_file_name = {u'部署实施': 'devops_task',
+                     u'devops': 'devops_task',
+                     u'【公安】运维': 'ops_task',
+                     u'【运维】北区': 'ops_task_bj',
+                     }
 
 
 class XlsxHandler:
@@ -31,10 +37,27 @@ class XlsxHandler:
 
         # logging.log(logging.WARN, u"XlsxHandler __init__(%s)" % pathname)
 
+        import chardet
+
+        _result = chardet.detect(pathname)
+        self.filen = pathname.decode(_result['encoding']).encode("utf8")
+        self.table_name = "star_task"
+        self.isSpecial()
+
         self.data = xlrd.open_workbook(pathname)
         self.tables = self.data.sheets()
         self.table = self.tables[0]
         self.nrows = self.table.nrows
+
+    def isSpecial(self):
+        for _f in special_file_name:
+            if _f in self.filen:
+                self.table_name = special_file_name[_f]
+                return True
+        return False
+
+    def getTableName(self):
+        return self.table_name
 
     def getSheetNumber(self):
         return len(self.tables)
@@ -45,7 +68,10 @@ class XlsxHandler:
             self.nrows = self.table.nrows
 
     def getNrows(self):
-        return self.nrows
+        if self.isSpecial():
+            return self.nrows-1
+        else:
+            return self.nrows-3
 
     def getData(self, row, col):
         """
@@ -64,6 +90,12 @@ class XlsxHandler:
 
         # print(">>> getXlsxColStr: %d" % self.table.ncols)
         _col = self.getXlsxColName(self.table.ncols)
+
+        """
+        for _c in _col:
+            print(u"%s" % _c)
+        """
+
         _str = ""
         for _s in _col:
             _str += (_s + ',')
@@ -71,22 +103,43 @@ class XlsxHandler:
         # _str = _str.decode("utf-8", "replace")
         return _str, self.table.ncols
 
+    def getFirstRow(self):
+        if self.isSpecial():
+            return 1
+        else:
+            return 2
+
     def getXlsxColName(self, nCol):
 
         _col = []
-        for i in range(1, nCol):
-            _colv = self.table.row_values(0)[i]
-            _col.append(_colv)
-            # print(">>> Col[%s]" % _colv)
+        if u'工单记录及发包情况' in self.filen:
+            return [u'任务', u'执行人', u'日期']
+
+        if self.isSpecial():
+            for i in range(0, nCol):
+                _colv = self.table.row_values(0)[i]
+                _col.append(_colv)
+                # print(u">>> Col[%s]" % _colv)
+        else:
+            for i in range(0, nCol):
+                _colv = self.table.row_values(1)[i]
+                _col.append(_colv)
+                # print(">>> Col[%s]" % _colv)
         return _col
 
     def getXlsxAllColName(self, nCol):
 
+        if u'工单记录及发包情况' in self.filen:
+            return [u'任务', u'执行人', u'日期']
+
         _col = []
         for i in range(nCol):
-            _colv = self.table.row_values(1)[i]
+            if self.isSpecial():
+                _colv = self.table.row_values(0)[i]
+            else:
+                _colv = self.table.row_values(1)[i]
             _col.append(_colv)
-            # print(">>> Col[%s]" % _colv)
+            # print(u">>> Col[%s]" % _colv)
         return _col
 
     def getXlsxRow(self, i, nCol, lastRow):
@@ -137,17 +190,14 @@ class XlsxHandler:
         return row
 
 
-def doList(xlsx_handler, mongodb, _type, _op, _ncol, keys):
-
-    _keys = keys
+def doList(xlsx_handler, mongodb, _type, _op, _ncol):
 
     # print("%s- doList ing <%d:%d>" % (time.ctime(), _ncol, xlsx_handler.getNrows()))
 
     _rows = []
-    for i in range(1, xlsx_handler.getNrows()):
+    _first = xlsx_handler.getFirstRow()
+    for i in range(_first, _first + xlsx_handler.getNrows()):
         _row = xlsx_handler.getXlsxRow(i, _ncol, None)
-        if not _row[0].isdigit():
-            continue
         _rows.append(_row)
 
     _col = xlsx_handler.getXlsxAllColName(_ncol)
@@ -156,7 +206,6 @@ def doList(xlsx_handler, mongodb, _type, _op, _ncol, keys):
     # print _col
 
     _count = 0
-    _key = []
     if len(_rows) > 0:
 
         if 'APPEND' in _op:
@@ -167,30 +216,21 @@ def doList(xlsx_handler, mongodb, _type, _op, _ncol, keys):
                 _value = {}
                 _i = 0
 
-                _search = {}
-                for _v in _keys:
-                    _search[_col[_v]] = _row[_v]
-
-                # print _search
-
-                # _v = mongodb.handler(_type, 'find_one', _search)
-                # print _v
-
                 for _c in _col:
                     _value[_c] = _row[_i]
+                    # print(u">>> [%s] = <%s>" % (_c, _row[_i]))
                     _i += 1
 
                 print ">>> update table: ", _type
                 try:
-                    if _search not in _key:
-                        # mongodb.handler(_type, 'remove', _search)
-                        mongodb.handler(_type, 'update', _search, _value)
-                        _key.append(_search)
-                        _count += 1
+                    mongodb.handler(_type, 'update', _value, _value)
+                    # print _value
+                    _count += 1
                 except Exception, e:
                     print "error: ", e
                 finally:
                     print '.',
+
         print "[", _count, "]"
         logging.log(logging.WARN, "doList: number of record be inputted: %d" % _count)
 
@@ -211,12 +251,13 @@ def main(filename):
 
         _str, _ncols = xlsx_handler.getXlsxColStr()
 
-        _table = "star_task"
+        # _table = "star_task"
+        _table = xlsx_handler.getTableName()
 
         logging.log(logging.WARN, ">>> 3.")
 
-        doList(xlsx_handler, mongo_db, _table, "APPEND", _ncols, range(3))
-        print("%s- Done" % time.ctime())
+        doList(xlsx_handler, mongo_db, _table, "APPEND", _ncols)
+        print("%s- Done<%s>" % (time.ctime(), _table))
         logging.log(logging.WARN, "main: Done!")
         return True
 

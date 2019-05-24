@@ -13,7 +13,6 @@ from pymongo import MongoClient
 import time
 from bson.objectid import ObjectId
 import datetime
-import ConfigParser
 import handler
 
 
@@ -127,3 +126,28 @@ class mongoDB:
         """
         from_datetime = datetime.datetime.strptime(str_date,'%Y-%m-%d')
         return ObjectId.from_datetime(generation_time=from_datetime)
+
+    @staticmethod
+    def getNames(name_str):
+        """
+        应对输入多人员名称的情况
+        :param name_str: 名称
+        :return: 名称数组
+        """
+        _name = name_str\
+            .replace(",", " ")\
+            .replace(";", " ")\
+            .replace(u"、", " ")\
+            .replace(u"，", " ")\
+            .replace(u"；", " ")\
+            .replace(u"　", " ")
+        _names = _name.split(' ')
+        _name = []
+        for _n in _names:
+            if len(_n) > 0:
+                _name.append(_n)
+        return _name
+
+    @staticmethod
+    def cvGbk2Utf8(msg):
+        return msg.decode('gbk').encode("utf8")

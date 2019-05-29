@@ -414,6 +414,7 @@ def main():
             for _pj in _project_alias:
                 if (_pj in _r['project'].upper()) or (_pj in _r['summary'].upper()):
                     _pj = _project_alias[_pj]
+                    _r['project'] = _pj
                     if _pj not in _project:
                         _project[_pj] = []
                     if _key not in _project[_pj]:
@@ -469,12 +470,36 @@ def main():
             _n_cnt += 1
             print(u"%s" % _key)
         else:
+            import WorkLogHandler
+
+            _list, _text, _row = WorkLogHandler.behavior_analysis_by_work_log(_member[_key])
+
+            for _v in _text:
+                _print(_v)
+
+            _print(u"一、工作范围")
+            doc.addTable(1, 2, col_width=(1, 1))
+            _title = (('text', u'工作范围'),
+                      ('text', u'特征'))
+            doc.addRow(_title)
+            doc.addRow(_row[0])
+
+            _print(u"二、行为特征")
+            doc.addTable(1, 3, col_width=(1.6, 1.6, 2))
+            _title = (('text', u'主题分布'),
+                      ('text', u'行为分布'),
+                      ('text', u'特征'))
+            doc.addRow(_title)
+            doc.addRow(_row[1])
+
+            _print(u"三、工作明细")
             doc.addTable(1, 3, col_width=(0.5, 2, 4))
             _title = (('text', u'日期'),
                       ('text', u'项目'),
                       ('text', u'任务内容')
                       )
             doc.addRow(_title)
+
             for _r in sorted(_member[_key], key=lambda x: x['date']):
                 if len(_r['summary']) > 40:
                     _text = (

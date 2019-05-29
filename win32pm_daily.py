@@ -74,11 +74,6 @@ def fileHandler(hwnd, _file):
         for para in _doc.paragraphs:
 
             _params = getParam(para.text)
-            if para.style.name in "List Paragraph":
-                show_message(hwnd, u"文档正文格式错误！")
-                return
-
-            # print _params
 
             if "Title" in para.style.name:
                 _daily['title'] = {"alias": _params[0], "project_id": _params[2]}
@@ -88,6 +83,11 @@ def fileHandler(hwnd, _file):
                         _text_lvl = 1
                         _daily['title']['date'] = _params[0]
                     elif _heading_lvl == 1:
+
+                        if para.style.name in "List Paragraph":
+                            show_message(hwnd, u"文档正文【总体目标】格式错误！")
+                            return
+
                         if 'total_target' not in _daily:
                             _daily['total_target'] = []
                         if len(_params) == 4:
@@ -111,6 +111,11 @@ def fileHandler(hwnd, _file):
                             return
 
                     elif _heading_lvl == 2:
+
+                        if para.style.name in "List Paragraph":
+                            show_message(hwnd, u"文档正文【阶段目标】格式错误！")
+                            return
+
                         if 'stage_target' not in _daily:
                             _daily['stage_target'] = []
                         if len(_params) == 5:
@@ -132,10 +137,15 @@ def fileHandler(hwnd, _file):
                                                            'daily_date': _daily['title']['date']
                                                            })
                         else:
-                            show_message(hwnd, u"文档正文【阶段目标】格式错误！")
-                            return
+                            # show_message(hwnd, u"文档正文【阶段目标】格式错误！")
+                            print _params
 
                     elif _heading_lvl == 3:
+
+                        if para.style.name in "List Paragraph":
+                            show_message(hwnd, u"文档正文【今日工作汇报】格式错误！")
+                            return
+
                         if 'today' not in _daily:
                             _daily['today'] = []
                         if len(_params) >= 5:
@@ -147,6 +157,11 @@ def fileHandler(hwnd, _file):
                                                     'daily_date': _daily['title']['date']
                                                     })
                     elif _heading_lvl == 4:
+
+                        if para.style.name in "List Paragraph":
+                            show_message(hwnd, u"文档正文【明日工作计划】格式错误！")
+                            return
+
                         if 'tomorrow' not in _daily:
                             _daily['tomorrow'] = []
                         if len(_params) >= 4:
@@ -293,6 +308,8 @@ def fileHandler(hwnd, _file):
                         mongo_db.handler("problem", "insert", dict(_daily['title'].items() + _v.items()))
                     except Exception, e:
                         print e
+        else:
+            show_message(hwnd, u"该文档【%s】已导入系统！" % _short_file.decode("gbk").encode("utf8"))
 
 
 def WndProc(hwnd, msg, wParam, lParam):

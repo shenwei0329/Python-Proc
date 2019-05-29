@@ -266,6 +266,14 @@ def behavior_analysis(personal, bg_date, ed_date, filter=None, mday=22):
     _cur = db.handler("worklog", "find", _sql)
 
     _log = []
+    """构建行为结构
+    - comment：内容
+    - object：工作对象
+    - active：
+    - depth：
+    - issues：任务数组
+    - issue：任务
+    """
     _behavior = {'comment': '', 'object': {}, 'active': {}, 'depth': {},
                  'subject_pd': {}, 'subject_pj': {}, 'issues': [], 'issue': 0}
     _obj_sum = 0
@@ -467,6 +475,172 @@ def behavior_analysis(personal, bg_date, ed_date, filter=None, mday=22):
             __str += u"。"
 
     _row = [(('pic', _fn_pd, 1.6), ('pic', _fn_pj, 1.6), ('text', u'%s\n%s' % (_str, __str)))]
+
+    _labels = []
+    _data = []
+    _sum = {}
+    _obj_items = []
+    for _obj in sorted(object_class):
+        _labels.append(_obj)
+        if _obj not in _sum:
+            _sum[_obj] = 0
+        for _o in object_class[_obj]:
+            _sum[_obj] += _behavior['object'][_o]
+
+        _data.append(_sum[_obj])
+        _obj_items.append((_obj, _sum[_obj]))
+
+    _fn_object = DataHandler.doBox.radar_chart(u"工作主题分布", _labels, _data)
+
+    _labels = []
+    _data = []
+    _act_items = []
+    for _obj in sorted(active_class):
+        _labels.append(_obj)
+        if _obj not in _sum:
+            _sum[_obj] = 0
+        for _o in active_class[_obj]:
+            _sum[_obj] += _behavior['active'][_o]
+        _data.append(_sum[_obj])
+        _act_items.append((_obj, _sum[_obj]))
+
+    _fn_active = DataHandler.doBox.radar_chart(u"工作行为分布", _labels, _data)
+
+    _v = sorted(_obj_items, key=itemgetter(1), reverse=True)
+    _str = ""
+    if len(_v) > 0:
+        if _v[0][1] > 0:
+            _str = u"• 工作以%s为主" % _v[0][0]
+            if len(_v) > 1 and _v[1][1] > 0:
+                _str += u"，其次分别为"
+                _lvl = 0
+                for _vv in _v[1:]:
+                    if _vv[1] > 0:
+                        _str += u"%s，" % _vv[0]
+                        _lvl += 1
+                        if _lvl > 3:
+                            break
+                _str = _str[:-1]
+            _str += u"。"
+
+    _v = sorted(_act_items, key=itemgetter(1), reverse=True)
+    __str = ""
+    if len(_v) > 0:
+        if _v[0][1] > 0:
+            __str = u"• 工作行为集中在%s" % _v[0][0]
+            if len(_v) > 1 and _v[1][1] > 0:
+                __str += u"，其次分别为"
+                _lvl = 0
+                for _vv in _v[1:]:
+                    if _vv[1] > 0:
+                        __str += u"%s，" % _vv[0]
+                        _lvl += 1
+                        if _lvl > 3:
+                            break
+                __str = __str[:-1]
+            __str += u"。"
+
+    _row.append((('pic', _fn_object, 1.6), ('pic', _fn_active, 1.6), ('text', u'%s\n%s' % (_str, __str))))
+
+    return _list, _text, _row
+
+
+pj_list = [u"嘉定",
+            u"嘉兴",
+            u"甘孜",
+            u"安徽",
+            u"湖北",
+            u"云南",
+            u"福田",
+            u"产品研发",
+            u"公安",
+            u"葫芦岛",
+            u"新机场",
+            u"警综",
+            u"国信",
+            u"指挥"]
+
+
+def behavior_analysis_by_work_log(log):
+    """
+    根据“工作日志”内容进行个人行为分析
+    :param log: 日志，{'date': 日期, 'project': 项目, 'summary': 内容}
+    :return: _list，任务内容；_text，行为数据说明； _row，行为特征
+    """
+
+    _list = []
+
+    _behavior = {'comment': '', 'object': {}, 'active': {}, 'depth': {},
+                 'project': {}, 'issues': [], 'issue': 0}
+
+    for _t in sorted(log, key=lambda x: x['date']):
+        print _t['project']
+        if _t['project'] not in _behavior['project']:
+            _behavior['project'][_t['project']] = 0
+
+        _behavior['project'][_t['project']] += 1
+        _behavior['issue'] += 1
+        _behavior['comment'] += _t['summary']
+
+    _obj_sum = 0
+    _act_sum = 0
+    for _obj in sorted(key_object):
+        if _obj not in _behavior['object']:
+            _behavior['object'][_obj] = 0
+        _behavior['object'][_obj] += count(_behavior['comment'], _obj)
+        _obj_sum += _behavior['object'][_obj]
+    for _act in sorted(key_active):
+        if _act not in _behavior['active']:
+            _behavior['active'][_act] = 0
+        _behavior['active'][_act] += count(_behavior['comment'], _act)
+        _act_sum += _behavior['active'][_act]
+    for _dep in sorted(key_depth):
+        if _dep not in _behavior['depth']:
+            _behavior['depth'][_dep] = 0
+        _behavior['depth'][_dep] += count(_behavior['comment'], _dep)
+
+    _text = [u"1）工作日志记录总数：%d 个，信息量：%d 字" % (_behavior['issue'], len(_behavior['comment'])),
+             u"2）有效主题和行为各 %d、%d 个" % (_obj_sum, _act_sum)]
+
+    _q = float(np.mean([_obj_sum, _act_sum]))/float(_behavior['issue'])
+    _q_str = u"弱"
+    if _q >= 1.0:
+        _q_str = u"有效"
+
+    _text.append(u"3）日志记录的质量：%s（指标为%0.2f）" % (_q_str, _q))
+
+    _labels = []
+    _data = []
+    _pj_items = []
+    for _pj in sorted(pj_list):
+        _labels.append(_pj)
+        if _pj in _behavior['project']:
+            _data.append(_behavior['project'][_pj])
+            _pj_items.append((_pj, _behavior['project'][_pj]))
+        else:
+            _data.append(0)
+            _pj_items.append((_pj, 0))
+
+    _fn_pj = DataHandler.doBox.radar_chart(u"【项目】工作范围", _labels, _data)
+
+    _v = sorted(_pj_items, key=itemgetter(1), reverse=True)
+    __str = ""
+    if len(_v) > 0:
+        if _v[0][1] > 0:
+            __str = u"• 工作以%s为主" % _v[0][0]
+            if len(_v) > 1 and _v[1][1] > 0:
+                __str += u"，其次分别为"
+                _lvl = 0
+                for _vv in _v[1:]:
+                    if _vv[1] > 0:
+                        __str += u"%s，" % _vv[0]
+                        _lvl += 1
+                        if _lvl > 3:
+                            break
+                __str = __str[:-1]
+            __str += u"。"
+
+    _row = [(('pic', _fn_pj, 1.6), ('text', u'%s' % __str))]
 
     _labels = []
     _data = []

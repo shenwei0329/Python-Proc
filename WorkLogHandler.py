@@ -546,24 +546,29 @@ def behavior_analysis(personal, bg_date, ed_date, filter=None, mday=22):
 
 
 pj_list = [u"嘉定",
-            u"嘉兴",
-            u"甘孜",
-            u"安徽",
-            u"湖北",
-            u"云南",
-            u"福田",
-            u"产品研发",
-            u"公安",
-            u"葫芦岛",
-            u"新机场",
-            u"警综",
-            u"国信",
-            u"指挥"]
+           u"嘉兴",
+           u"甘孜",
+           u"安徽",
+           u"湖北",
+           u"云南",
+           u"福田",
+           u"产品相关",
+           u"公安",
+           u"葫芦岛",
+           u"新机场",
+           u"警综",
+           u"国信",
+           u"指挥",
+           u"DevOps",
+           u"测试",
+           u"联通沃云"
+           ]
 
 
-def behavior_analysis_by_work_log(log):
+def behavior_analysis_by_work_log(member, log):
     """
     根据“工作日志”内容进行个人行为分析
+    :param member: 员工
     :param log: 日志，{'date': 日期, 'project': 项目, 'summary': 内容}
     :return: _list，任务内容；_text，行为数据说明； _row，行为特征
     """
@@ -621,7 +626,7 @@ def behavior_analysis_by_work_log(log):
             _data.append(0)
             _pj_items.append((_pj, 0))
 
-    _fn_pj = DataHandler.doBox.radar_chart(u"【项目】工作范围", _labels, _data)
+    _fn_pj = DataHandler.doBox.radar_chart(u"工作范围", _labels, _data, member=member)
 
     _v = sorted(_pj_items, key=itemgetter(1), reverse=True)
     __str = ""
@@ -656,7 +661,7 @@ def behavior_analysis_by_work_log(log):
         _data.append(_sum[_obj])
         _obj_items.append((_obj, _sum[_obj]))
 
-    _fn_object = DataHandler.doBox.radar_chart(u"工作主题分布", _labels, _data)
+    _fn_object = DataHandler.doBox.radar_chart(u"工作主题分布", _labels, _data, member=member)
 
     _labels = []
     _data = []
@@ -670,7 +675,7 @@ def behavior_analysis_by_work_log(log):
         _data.append(_sum[_obj])
         _act_items.append((_obj, _sum[_obj]))
 
-    _fn_active = DataHandler.doBox.radar_chart(u"工作行为分布", _labels, _data)
+    _fn_active = DataHandler.doBox.radar_chart(u"工作行为分布", _labels, _data, member=member)
 
     _v = sorted(_obj_items, key=itemgetter(1), reverse=True)
     _str = ""

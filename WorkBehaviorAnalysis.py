@@ -23,6 +23,8 @@ import DataHandler.crWord
 from pylab import mpl
 from datetime import datetime, date, timedelta
 import time
+from DataHandler import redis_class
+
 
 """设置字符集
 """
@@ -188,14 +190,19 @@ def inDateRegion(table, rec, bg_date, end_date):
                      })
 
         elif 'devops_task' in table:
-            """由【完成时间】字段选择
-            """
-            _date = _r[u'完成时间'].replace(u"年", '-').replace(u"月", '-').replace(u"日", '')
-            if len(_date)>0 and inRegion(_date, bg_date, end_date):
+            if u"完成" in _r[u'任务状态']:
+                """由【完成时间】字段选择"""
+                _date = _r[u'完成时间'].replace(u"年", '-').replace(u"月", '-').replace(u"日", '')
+                _selected = (len(_date) > 0 and inRegion(_date, bg_date, end_date))
+            else:
+                """由【截止时间】字段选择"""
+                _date = _r[u'截止时间'].replace(u"年", '-').replace(u"月", '-').replace(u"日", '')
+                _selected = (len(_date) > 0 and afterDate(_date, end_date))
+            if _selected:
                 print _date
                 _rec.append(
                     {'date': formatDate(_date),
-                     'project': "devops",
+                     'project': "DevOps",
                      'summary': _r[u"标题"]
                      })
 
@@ -343,6 +350,8 @@ def main():
 
     _member = {}
 
+    key_member = redis_class.KeyLiveClass('personal')
+
     if len(args) == 0:
         _members = loadMembers()
         print _members
@@ -393,17 +402,45 @@ def main():
         u"湖北": u"湖北",
         u"云南": u"云南",
         u"福田": u"福田",
-        "FAST": u"产品研发",
-        "HUBBLE": u"产品研发",
+        "FAST": u"产品相关",
+        "HUBBLE": u"产品相关",
         u"公安": u"公安",
         "HLD": u"葫芦岛",
         u"新机场": u"新机场",
         u"警综": u"警综",
         u"国信": u"国信",
         u"指挥项目": u"指挥",
-        u"指挥系统": u"指挥",
+        u"指挥": u"指挥",
         "YN": u"云南",
-        "GZ": u"甘孜"
+        "GZ": u"甘孜",
+        "DEVOPS": u"DevOps",
+        u"产品设计": u"产品相关",
+        u"沃云": u"联通沃云",
+        u"测试中心": u"测试",
+    }
+
+    """从日志内容中识别项目信息"""
+    _project_alias_at_summary = {
+        u"嘉定": u"嘉定",
+        u"嘉兴": u"嘉兴",
+        u"甘孜": u"甘孜",
+        u"安徽": u"安徽",
+        u"湖北": u"湖北",
+        u"云南": u"云南",
+        u"福田": u"福田",
+        "FAST": u"产品相关",
+        "HUBBLE": u"产品相关",
+        u"公安": u"公安",
+        "HLD": u"葫芦岛",
+        u"新机场": u"新机场",
+        u"警综": u"警综",
+        u"国信": u"国信",
+        "YN": u"云南",
+        "GZ": u"甘孜",
+        "DEVOPS": u"DevOps",
+        u"产品设计": u"产品相关",
+        u"沃云": u"联通沃云",
+        u"综合作战": u"指挥",
     }
 
     _project = {}
@@ -412,14 +449,24 @@ def main():
     for _key in _member:
         for _r in _member[_key]:
             for _pj in _project_alias:
-                if (_pj in _r['project'].upper()) or (_pj in _r['summary'].upper()):
+                if _pj in _r['project'].upper():
                     _pj = _project_alias[_pj]
                     _r['project'] = _pj
                     if _pj not in _project:
                         _project[_pj] = []
                     if _key not in _project[_pj]:
                         _project[_pj].append(_key)
+                    if _key not in _in_project:
+                        _in_project.append(_key)
 
+            for _pj in _project_alias_at_summary:
+                if _pj in _r['summary'].upper():
+                    _pj = _project_alias_at_summary[_pj]
+                    _r['project'] = _pj
+                    if _pj not in _project:
+                        _project[_pj] = []
+                    if _key not in _project[_pj]:
+                        _project[_pj].append(_key)
                     if _key not in _in_project:
                         _in_project.append(_key)
 
@@ -460,6 +507,9 @@ def main():
 
     _used_cnt = 0
     _n_cnt = 0
+
+    _p = {}
+
     for _key in sorted(_member):
 
         _print(u"%d、%s" % (_lvl, _key), title=True, title_lvl=1)
@@ -472,7 +522,12 @@ def main():
         else:
             import WorkLogHandler
 
-            _list, _text, _row = WorkLogHandler.behavior_analysis_by_work_log(_member[_key])
+            _list, _text, _row = WorkLogHandler.behavior_analysis_by_work_log(_key, _member[_key])
+            if _member[_key] is not _p:
+                _p[_key] = {}
+            _p[_key]['list'] = _list
+            _p[_key]['text'] = _text
+            _p[_key]['row'] = _row
 
             for _v in _text:
                 _print(_v)
@@ -516,6 +571,18 @@ def main():
                 doc.addRow(_text)
             _used_cnt += 1
         doc.addPageBreak()
+
+    context = dict(
+        members=_members,
+        list=_p,
+        log=_member,
+    )
+
+    context['total_count'] = _used_cnt + _n_cnt
+    context['used_count'] = _used_cnt
+    context['no_count'] = _n_cnt
+    context['weekdate'] = u'%s至%s' % (cvDate2Chn(_bg_time), cvDate2Chn(_now))
+    key_member.set(context)
 
     print(">>> Total: %d, Used: %d, Not: %d" % ((_used_cnt + _n_cnt), _used_cnt, _n_cnt))
     _str = u'本时间段内，应提交个人工作日志的总人数为 %d 人；其中，提交个人工作日志的有 %d 人，未提交的有 %d 人。\n' %\

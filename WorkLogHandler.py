@@ -136,7 +136,8 @@ active_class = {
         u"评审",
         u"了解",
         u"获取",
-],
+        u"沟通",
+    ],
     u"改进": [
         u"梳理",
         u"整理",
@@ -155,6 +156,7 @@ active_class = {
     u"管理": [
         u"安排",
         u"分配",
+        u"计划",
     ],
     u"设计": [
         u"设计",
@@ -168,6 +170,9 @@ active_class = {
         u"部署",
         u"提交",
         u"迁移",
+    ],
+    u"运维": [
+        u"巡检",
     ]
 }
 
@@ -178,6 +183,7 @@ key_active = [u"参加",
               u"删",
               u"制作",
               u"修",
+              u"巡检",
               u"处理",
               u"调整",
               u"联调",
@@ -203,6 +209,8 @@ key_active = [u"参加",
               u"迭代",
               u"迁移",
               u"讨论",
+              u"沟通",
+              u"计划",
               u"获取"]
 key_depth = [u"已",
              u"完成",
@@ -495,6 +503,7 @@ def behavior_analysis(personal, bg_date, ed_date, filter=None, mday=22):
     _labels = []
     _data = []
     _act_items = []
+    _sum = {}
     for _obj in sorted(active_class):
         _labels.append(_obj)
         if _obj not in _sum:
@@ -561,7 +570,8 @@ pj_list = [u"嘉定",
            u"指挥",
            u"DevOps",
            u"测试",
-           u"联通沃云"
+           u"联通沃云",
+           u"卫士云",
            ]
 
 
@@ -579,7 +589,7 @@ def behavior_analysis_by_work_log(member, log):
                  'project': {}, 'issues': [], 'issue': 0}
 
     for _t in sorted(log, key=lambda x: x['date']):
-        print _t['project']
+        # print _t['project']
         if _t['project'] not in _behavior['project']:
             _behavior['project'][_t['project']] = 0
 
@@ -614,19 +624,17 @@ def behavior_analysis_by_work_log(member, log):
 
     _text.append(u"3）日志记录的质量：%s（指标为%0.2f）" % (_q_str, _q))
 
-    _labels = []
     _data = []
     _pj_items = []
     for _pj in sorted(pj_list):
-        _labels.append(_pj)
         if _pj in _behavior['project']:
-            _data.append(_behavior['project'][_pj])
+            _data.append((_pj, _behavior['project'][_pj]))
             _pj_items.append((_pj, _behavior['project'][_pj]))
         else:
-            _data.append(0)
+            _data.append((_pj, 0))
             _pj_items.append((_pj, 0))
 
-    _fn_pj = DataHandler.doBox.radar_chart(u"工作范围", _labels, _data, member=member)
+    _fn_pj = DataHandler.doBox.radar_chart_log(u"工作范围", _data, member=member)
 
     _v = sorted(_pj_items, key=itemgetter(1), reverse=True)
     __str = ""
@@ -647,41 +655,37 @@ def behavior_analysis_by_work_log(member, log):
 
     _row = [(('pic', _fn_pj, 1.6), ('text', u'%s' % __str))]
 
-    _labels = []
     _data = []
     _sum = {}
     _obj_items = []
     for _obj in sorted(object_class):
-        _labels.append(_obj)
         if _obj not in _sum:
             _sum[_obj] = 0
         for _o in object_class[_obj]:
             _sum[_obj] += _behavior['object'][_o]
 
-        _data.append(_sum[_obj])
+        _data.append((_obj, _sum[_obj]))
         _obj_items.append((_obj, _sum[_obj]))
 
-    _fn_object = DataHandler.doBox.radar_chart(u"工作主题分布", _labels, _data, member=member)
+    _fn_object = DataHandler.doBox.radar_chart_log(u"工作主题分布", _data, member=member)
 
-    _labels = []
     _data = []
     _act_items = []
     for _obj in sorted(active_class):
-        _labels.append(_obj)
         if _obj not in _sum:
             _sum[_obj] = 0
         for _o in active_class[_obj]:
             _sum[_obj] += _behavior['active'][_o]
-        _data.append(_sum[_obj])
+        _data.append((_obj, _sum[_obj]))
         _act_items.append((_obj, _sum[_obj]))
 
-    _fn_active = DataHandler.doBox.radar_chart(u"工作行为分布", _labels, _data, member=member)
+    _fn_active = DataHandler.doBox.radar_chart_log(u"工作行为分布", _data, member=member)
 
     _v = sorted(_obj_items, key=itemgetter(1), reverse=True)
     _str = ""
     if len(_v) > 0:
         if _v[0][1] > 0:
-            _str = u"• 工作以%s为主" % _v[0][0]
+            _str = u"• 工作主题以%s为主" % _v[0][0]
             if len(_v) > 1 and _v[1][1] > 0:
                 _str += u"，其次分别为"
                 _lvl = 0

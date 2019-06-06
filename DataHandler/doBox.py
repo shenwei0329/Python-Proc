@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 #
 
+import matplotlib as mpl
+mpl.use('Agg')
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
@@ -938,6 +941,56 @@ def radar_chart(title, labels, datas, member=None):
     ax.plot(angles, data, 'bo-', linewidth=2)
     ax.fill(angles, data, facecolor='r', alpha=0.25)
     ax.set_thetagrids(angles * 180 / np.pi, labels, fontproperties="SimHei")
+    ax.set_title(title, va='bottom', fontproperties="SimHei")
+    ax.set_rlim(0, 10)
+    ax.grid(True)
+
+    if member is None:
+        _fn = 'pic/%s_%s.png' % (title, time.strftime('%Y%m%d%H%M%S', time.localtime(time.time())))
+    else:
+        _fn = u'member/%s_%s.png' % (member, title)
+    if not __test:
+        plt.savefig(_fn, dpi=100)
+    else:
+        plt.show()
+    return _fn
+
+
+def radar_chart_log(title, datas, member=None):
+    # =======自己设置开始============
+    # 标签
+    # labels = np.array(['艺术A', '调研I', '实际R', '常规C', '企业E', '社会S'])
+    # 数据个数
+    # dataLenth = 6
+    # 数据
+    # data = np.array([1, 4, 3, 6, 4, 8])
+    # ========自己设置结束============
+
+    _sum = 0
+    data = []
+
+    _labels = []
+    for _v in datas:
+        _sum += _v[1]
+        _labels.append(_v[0])
+
+    for _vv in datas:
+        _v = _vv[1]
+        if _sum > 0:
+            data.append(float(_v*10)/float(_sum)+0.5)
+        else:
+            data.append(0)
+
+    _len = len(data)
+    angles = np.linspace(0, 2 * np.pi, _len, endpoint=False)
+    data = np.concatenate((data, [data[0]]))
+    angles = np.concatenate((angles, [angles[0]]))
+
+    fig = plt.figure(num=None, figsize=(4, 4), dpi=100, facecolor='w', edgecolor='k')
+    ax = fig.add_subplot(111, polar=True)
+    ax.plot(angles, data, 'bo-', linewidth=2)
+    ax.fill(angles, data, facecolor='r', alpha=0.25)
+    ax.set_thetagrids(angles * 180 / np.pi, _labels, fontproperties="SimHei")
     ax.set_title(title, va='bottom', fontproperties="SimHei")
     ax.set_rlim(0, 10)
     ax.grid(True)

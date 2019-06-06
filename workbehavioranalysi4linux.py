@@ -10,6 +10,9 @@
 
 from __future__ import unicode_literals
 
+import matplotlib as mpl
+mpl.use('Agg')
+
 try:
     import configparser as configparser
 except Exception:
@@ -18,8 +21,6 @@ except Exception:
 import os
 import sys
 import mongodb_class
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-import DataHandler.crWord
 from pylab import mpl
 from datetime import datetime, date, timedelta
 import time
@@ -33,43 +34,8 @@ sys.setdefaultencoding('utf-8')
 
 mpl.rcParams['font.sans-serif'] = ['SimHei']
 
-doc = None
 oui_list = {}
 Topic = 1
-
-
-def _print(_str, title=False, title_lvl=0, color=None, align=None, paragrap=None ):
-
-    global doc, Topic
-
-    _str = u"%s" % _str.replace('\r', '').replace('\n','')
-
-    _paragrap = None
-
-    if title_lvl == 1:
-        Topic = 1
-    if title:
-        if title_lvl == 2:
-            _str = "%d、" % Topic + _str
-            Topic += 1
-        if align is not None:
-            _paragrap = doc.addHead(_str, title_lvl, align=align)
-        else:
-            _paragrap = doc.addHead(_str, title_lvl)
-    else:
-        if align is not None:
-            if paragrap is None:
-                _paragrap = doc.addText(_str, color=color, align=align)
-            else:
-                doc.appendText(paragrap, _str, color=color, align=align)
-        else:
-            if paragrap is None:
-                _paragrap = doc.addText(_str, color=color)
-            else:
-                doc.appendText(paragrap, _str, color=color)
-    print(_str)
-
-    return _paragrap
 
 
 def cvDate2Chn(date):
@@ -182,7 +148,7 @@ def inDateRegion(table, rec, bg_date, end_date):
             """
             _date = _r['started'].split('T')[0]
             if inRegion(_date, bg_date, end_date):
-                print _date
+                # print _date
                 _rec.append(
                     {'date': formatDate(_date),
                      'project': _r['project'],
@@ -199,7 +165,7 @@ def inDateRegion(table, rec, bg_date, end_date):
                 _date = _r[u'截止时间'].replace(u"年", '-').replace(u"月", '-').replace(u"日", '')
                 _selected = (len(_date) > 0 and afterDate(_date, end_date))
             if _selected:
-                print _date
+                # print _date
                 _rec.append(
                     {'date': formatDate(_date),
                      'project': "DevOps",
@@ -211,7 +177,7 @@ def inDateRegion(table, rec, bg_date, end_date):
             """
             _date = _r[u'日期'].encode("utf8").replace(u'年', '-').replace(u'月', '-').replace(u'日', '')
             if inRegion(_date, bg_date, end_date):
-                print _date
+                # print _date
                 _rec.append(
                     {'date': formatDate(_date),
                      'project': u"公安运维",
@@ -223,7 +189,7 @@ def inDateRegion(table, rec, bg_date, end_date):
             """
             _date = _r[u'创建于']
             if inRegion(_date, bg_date, end_date):
-                print _date
+                # print _date
                 if u"故障" in _r[u"跟踪"]:
                     _rec.append(
                         {'date': formatDate(_date),
@@ -244,7 +210,7 @@ def inDateRegion(table, rec, bg_date, end_date):
                 _date = _r[u"完成时间"].split(' ')[0]
                 if inRegion(_date, bg_date, end_date):
                     """在指定的时间范围内完成的"""
-                    print _date
+                    # print _date
                     _rec.append(
                         {'date': formatDate(_date),
                          'project': _r[u"分类"],
@@ -257,7 +223,7 @@ def inDateRegion(table, rec, bg_date, end_date):
                 """在指定的时间范围内已开始，且未完成的"""
                 if afterDate(_date_ed, end_date):
                     """针对“未完成”的任务，仅考虑当前未到期的"""
-                    print _date
+                    # print _date
                     _rec.append(
                         {'date': formatDate(_date),
                          'project': _r[u"分类"],
@@ -304,7 +270,6 @@ def loadMembers():
 
 
 def main():
-    global doc
 
     """解析命令行
     """
@@ -331,16 +296,6 @@ def main():
 
     _lvl = 1
 
-    """创建word文档实例
-    """
-    doc = DataHandler.crWord.createWord()
-    """写入"主题"
-    """
-    doc.addHead(u'个人《工作日志》报告', 0, align=WD_ALIGN_PARAGRAPH.CENTER)
-
-    _print(u'>>> 生成日期【%s】 <<<' % time.ctime(), align=WD_ALIGN_PARAGRAPH.CENTER)
-    _print(u'时间段：（%s至%s）' % (cvDate2Chn(_bg_time), cvDate2Chn(_now)), align=WD_ALIGN_PARAGRAPH.CENTER)
-
     data_sources = {"WORK_LOGS": ["worklog"],
                     "ext_system": ["devops_task",
                                    "ops_task",
@@ -354,7 +309,7 @@ def main():
 
     if len(args) == 0:
         _members = loadMembers()
-        print _members
+        # print _members
     else:
         _members = []
         for _p in args:
@@ -370,7 +325,7 @@ def main():
 
             for _table in data_sources[_db]:
 
-                print _db, _table
+                # print _db, _table
 
                 # _sql = build_sql(_table, db.cvGbk2Utf8(_p))
                 _sql = build_sql(_table, _p)
@@ -477,36 +432,6 @@ def main():
             if _key not in _no_project:
                 _no_project.append(_key)
 
-    _print(u"资源投入情况", title=True, title_lvl=1)
-
-    _pg = _print(u"相关项目有 %d 个，每个项目资源投入（参与的相关人员）情况如下表：" % len(_project))
-    doc.addTable(1, 3, col_width=(1, 1, 3))
-    _title = (('text', u'项目'),
-              ('text', u"人数"),
-              ('text', u'人员投入')
-              )
-    doc.addRow(_title)
-    for _pj in _project:
-        _mem = ""
-        _cnt = 0
-        for _m in _project[_pj]:
-            _mem += (_m + '，')
-            _cnt += 1
-        _text = (
-            ('text', u"%s" % _pj),
-            ('text', "%d" % _cnt),
-            ('text', u"%s" % _mem[:-1])
-        )
-        doc.addRow(_text)
-
-    if len(_no_project) > 0:
-        _str = u"没有参与以上项目（或未提交工作日志的）人员有："
-        for _p in _no_project:
-            _str += u"%s、" % _p
-        _print((_str[:-1]+u"。"))
-
-    doc.addPageBreak()
-
     _used_cnt = 0
     _n_cnt = 0
 
@@ -514,13 +439,9 @@ def main():
 
     for _key in sorted(_member):
 
-        _print(u"%d、%s" % (_lvl, _key), title=True, title_lvl=1)
-        _lvl += 1
-
         if len(_member[_key]) == 0:
-            _print(u"无工作内容。")
             _n_cnt += 1
-            print(u"%s" % _key)
+            # print(u"%s" % _key)
         else:
             import WorkLogHandler
 
@@ -531,48 +452,7 @@ def main():
             _p[_key]['text'] = _text
             _p[_key]['row'] = _row
 
-            for _v in _text:
-                _print(_v)
-
-            _print(u"一、工作范围")
-            doc.addTable(1, 2, col_width=(1, 1))
-            _title = (('text', u'工作范围'),
-                      ('text', u'特征'))
-            doc.addRow(_title)
-            doc.addRow(_row[0])
-
-            _print(u"二、行为特征")
-            doc.addTable(1, 3, col_width=(1.6, 1.6, 2))
-            _title = (('text', u'主题分布'),
-                      ('text', u'行为分布'),
-                      ('text', u'特征'))
-            doc.addRow(_title)
-            doc.addRow(_row[1])
-
-            _print(u"三、工作明细")
-            doc.addTable(1, 3, col_width=(0.5, 2, 4))
-            _title = (('text', u'日期'),
-                      ('text', u'项目'),
-                      ('text', u'任务内容')
-                      )
-            doc.addRow(_title)
-
-            for _r in sorted(_member[_key], key=lambda x: x['date']):
-                if len(_r['summary']) > 40:
-                    _text = (
-                        ('text', _r['date']),
-                        ('text', u"%s" % _r['project']),
-                        ('text', (u"%s" % _r['summary'])[:40] + '...')
-                    )
-                else:
-                    _text = (
-                        ('text', _r['date']),
-                        ('text', u"%s" % _r['project']),
-                        ('text', u"%s" % _r['summary'])
-                    )
-                doc.addRow(_text)
             _used_cnt += 1
-        doc.addPageBreak()
 
     context = dict(
         members=_members,
@@ -585,14 +465,6 @@ def main():
     context['no_count'] = _n_cnt
     context['weekdate'] = u'%s至%s' % (cvDate2Chn(_bg_time), cvDate2Chn(_now))
     key_member.set(context)
-
-    print(">>> Total: %d, Used: %d, Not: %d" % ((_used_cnt + _n_cnt), _used_cnt, _n_cnt))
-    _str = u'本时间段内，应提交个人工作日志的总人数为 %d 人；其中，提交个人工作日志的有 %d 人，未提交的有 %d 人。\n' %\
-           ((_used_cnt + _n_cnt), _used_cnt, _n_cnt)
-    _print(_str, paragrap=_pg)
-
-    doc.saveFile('WorkLogAnalysisRpt.docx')
-
 
 if __name__ == '__main__':
     main()

@@ -281,7 +281,8 @@ def main():
         usage()
         sys.exit(2)
 
-    yesterday = date.today() + timedelta(days=-1)
+    """当不指定时间段时，按从今天起前2周的时间计算"""
+    yesterday = date.today() + timedelta(days=-14)
     _bg_time = yesterday.strftime("%Y-%m-%d")
     _now = str(datetime.now()).split(' ')[0]
 

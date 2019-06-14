@@ -201,7 +201,7 @@ def main():
                 _stage[_r['id']][_r['sub_id']] = {'percent': []}
 
             if '%' in _r['percent']:
-                _pct = _r['percent'].split('%')[0]
+                _pct = (_r['percent'].split('%')[0]).split('.')[0]
             else:
                 _pct = '0'
             _stage[_r['id']][_r['sub_id']]['percent'].append(_pct)

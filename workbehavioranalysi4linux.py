@@ -147,8 +147,15 @@ def inDateRegion(table, rec, bg_date, end_date):
             """由【started】字段选择
             """
             _date = _r['started'].split('T')[0]
-            if inRegion(_date, bg_date, end_date):
-                # print _date
+            if bg_date is not None and end_date is not None:
+                if inRegion(_date, bg_date, end_date):
+                    # print _date
+                    _rec.append(
+                        {'date': formatDate(_date),
+                         'project': _r['project'],
+                         'summary': _r['comment']
+                         })
+            else:
                 _rec.append(
                     {'date': formatDate(_date),
                      'project': _r['project'],
@@ -159,25 +166,39 @@ def inDateRegion(table, rec, bg_date, end_date):
             if u"完成" in _r[u'任务状态']:
                 """由【完成时间】字段选择"""
                 _date = _r[u'完成时间'].replace(u"年", '-').replace(u"月", '-').replace(u"日", '')
-                _selected = (len(_date) > 0 and inRegion(_date, bg_date, end_date))
+                if bg_date is not None and end_date is not None:
+                    _selected = (len(_date) > 0 and inRegion(_date, bg_date, end_date))
+                else:
+                    _selected = True
             else:
                 """由【截止时间】字段选择"""
                 _date = _r[u'截止时间'].replace(u"年", '-').replace(u"月", '-').replace(u"日", '')
-                _selected = (len(_date) > 0 and afterDate(_date, end_date))
+                if bg_date is not None and end_date is not None:
+                    _selected = (len(_date) > 0 and afterDate(_date, end_date))
+                else:
+                    _selected = True
             if _selected:
                 # print _date
-                _rec.append(
-                    {'date': formatDate(_date),
-                     'project': "DevOps",
-                     'summary': _r[u"标题"]
-                     })
+                if '-' in _date:
+                    _rec.append(
+                        {'date': formatDate(_date),
+                         'project': "DevOps",
+                         'summary': _r[u"标题"]
+                         })
 
         elif 'ops_task' in table:
             """由【日期】字段选择
             """
             _date = _r[u'日期'].encode("utf8").replace(u'年', '-').replace(u'月', '-').replace(u'日', '')
-            if inRegion(_date, bg_date, end_date):
-                # print _date
+            if bg_date is not None and end_date is not None:
+                if inRegion(_date, bg_date, end_date):
+                    # print _date
+                    _rec.append(
+                        {'date': formatDate(_date),
+                         'project': u"公安运维",
+                         'summary': _r['任务'].encode("utf8")
+                         })
+            else:
                 _rec.append(
                     {'date': formatDate(_date),
                      'project': u"公安运维",
@@ -188,8 +209,22 @@ def inDateRegion(table, rec, bg_date, end_date):
             """由【创建于】字段选择
             """
             _date = _r[u'创建于']
-            if inRegion(_date, bg_date, end_date):
-                # print _date
+            if bg_date is not None and end_date is not None:
+                if inRegion(_date, bg_date, end_date):
+                    # print _date
+                    if u"故障" in _r[u"跟踪"]:
+                        _rec.append(
+                            {'date': formatDate(_date),
+                             'project': u"北京运维",
+                             'summary': _r[u'任务']
+                             })
+                    else:
+                        _rec.append(
+                            {'date': formatDate(_date),
+                             'project': u"北京运维",
+                             'summary': _r[u'主题']
+                             })
+            else:
                 if u"故障" in _r[u"跟踪"]:
                     _rec.append(
                         {'date': formatDate(_date),
@@ -208,9 +243,16 @@ def inDateRegion(table, rec, bg_date, end_date):
             """
             if u"已完成" in _r[u"任务状态"]:
                 _date = _r[u"完成时间"].split(' ')[0]
-                if inRegion(_date, bg_date, end_date):
-                    """在指定的时间范围内完成的"""
-                    # print _date
+                if bg_date is not None and end_date is not None:
+                    if inRegion(_date, bg_date, end_date):
+                        """在指定的时间范围内完成的"""
+                        # print _date
+                        _rec.append(
+                            {'date': formatDate(_date),
+                             'project': _r[u"分类"],
+                             'summary': (_r[u'任务描述'] + _r[u'任务详细描述']).replace('\n', '').replace('\r', '')
+                             })
+                else:
                     _rec.append(
                         {'date': formatDate(_date),
                          'project': _r[u"分类"],
@@ -221,14 +263,22 @@ def inDateRegion(table, rec, bg_date, end_date):
                 _date_ed = _r[u"截止时间"].split(' ')[0]
                 # if beforeDate(_date, bg_date) or afterDate(_date_ed, end_date):
                 """在指定的时间范围内已开始，且未完成的"""
-                if afterDate(_date_ed, end_date):
-                    """针对“未完成”的任务，仅考虑当前未到期的"""
-                    # print _date
+                if bg_date is not None and end_date is not None:
+                    if afterDate(_date_ed, end_date):
+                        """针对“未完成”的任务，仅考虑当前未到期的"""
+                        # print _date
+                        _rec.append(
+                            {'date': formatDate(_date),
+                             'project': _r[u"分类"],
+                             'summary': (_r[u'任务描述'] + _r[u'任务详细描述']).replace('\n', '').replace('\r', '')
+                             })
+                else:
                     _rec.append(
                         {'date': formatDate(_date),
                          'project': _r[u"分类"],
                          'summary': (_r[u'任务描述'] + _r[u'任务详细描述']).replace('\n', '').replace('\r', '')
                          })
+
         else:
             """无效"""
             continue
@@ -260,7 +310,7 @@ def loadMembers():
     _f = open('org_member.txt', "rb")
     while True:
         _s = _f.readline()
-        _s = _s.decode("gbk").encode("utf8")
+        # _s = _s.decode("gbk").encode("utf8")
         _s = _s.replace('\n', '').replace('\r', '')
         if _s is None:
             return _members
@@ -281,7 +331,14 @@ def main():
         usage()
         sys.exit(2)
 
-    """当不指定时间段时，按从今天起前2周的时间计算"""
+    """2019.6.14
+        统计分析应基于已有（全部）工作日志内容，
+        日志明细只提供近2周的。
+    today = datetime.date.today()
+    ed_date = today.strftime("%Y-%m-%d")
+    st_date = datetime.date(today.year - 1, today.month, today.day).strftime("%Y-%m-%d")
+
+    """
     yesterday = date.today() + timedelta(days=-14)
     _bg_time = yesterday.strftime("%Y-%m-%d")
     _now = str(datetime.now()).split(' ')[0]
@@ -339,8 +396,10 @@ def main():
 
                 _rec = db.handler(_table, "find", _sql)
                 # print _rec.count()
-                """时间窗口"""
+                """时间窗口
                 _rec = inDateRegion(_table, _rec, _bg_time, _now)
+                """
+                _rec = inDateRegion(_table, _rec, None, None)
 
                 if _p not in _member:
                     _member[_p] = []
@@ -407,6 +466,8 @@ def main():
     for _key in _member:
         for _r in _member[_key]:
             for _pj in _project_alias:
+                if 'project' not in _r:
+                    continue
                 if _pj in _r['project'].upper():
                     _pj = _project_alias[_pj]
                     _r['project'] = _pj
@@ -418,6 +479,8 @@ def main():
                         _in_project.append(_key)
 
             for _pj in _project_alias_at_summary:
+                if 'summary' not in _r:
+                    continue
                 if _pj in _r['summary'].upper():
                     _pj = _project_alias_at_summary[_pj]
                     _r['project'] = _pj
@@ -466,6 +529,7 @@ def main():
     context['no_count'] = _n_cnt
     context['weekdate'] = u'%s至%s' % (cvDate2Chn(_bg_time), cvDate2Chn(_now))
     key_member.set(context)
+
 
 if __name__ == '__main__':
     main()

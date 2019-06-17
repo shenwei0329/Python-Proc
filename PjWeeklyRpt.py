@@ -178,7 +178,7 @@ def main():
             }
 
         if '%' in _r['percent']:
-            _pct = _r['percent'].split('%')[0]
+            _pct = _r['percent'].split('%')[0].split('.')[0]
         else:
             _pct = '0'
         _pj[_r['project_id']]['id'][_r['id']]['percent'].append(_pct)

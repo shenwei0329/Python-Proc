@@ -308,14 +308,18 @@ def loadMembers():
     """
     _members = []
     _f = open('org_member.txt', "rb")
+    _first = True
     while True:
         _s = _f.readline()
-        # _s = _s.decode("gbk").encode("utf8")
-        _s = _s.replace('\n', '').replace('\r', '')
         if _s is None:
             return _members
         if len(_s) == 0:
             return _members
+        if _first:
+            _first = False
+            continue
+        # _s = _s.decode("gbk").encode("utf8")
+        _s = _s.split(' ')[0].replace('\n', '').replace('\r', '')
         _members.append(_s)
 
 
@@ -461,8 +465,11 @@ def main():
     }
 
     _project = {}
-    _no_project = []
-    _in_project = []
+    _project_stat = {}
+    _today = datetime.date.today()
+    st_date = int(datetime.date(_today.year - 1, _today.month).strftime("%Y%m"))
+    ed_date = int(datetime.date(_today.year, _today.month).strftime("%Y%m"))
+
     for _key in _member:
         for _r in _member[_key]:
             for _pj in _project_alias:
@@ -475,8 +482,14 @@ def main():
                         _project[_pj] = []
                     if _key not in _project[_pj]:
                         _project[_pj].append(_key)
-                    if _key not in _in_project:
-                        _in_project.append(_key)
+                    if _pj not in _project_stat:
+                        _project_stat[_pj] = {}
+
+                    _idx = int(_r['date'].replace('-', "")[:-2])
+                    if (_idx >= st_date) and (_idx < ed_date):
+                        if _idx not in _project_stat[_pj]:
+                            _project_stat[_pj][_idx] = 0
+                        _project_stat[_pj][_idx] += 1
 
             for _pj in _project_alias_at_summary:
                 if 'summary' not in _r:
@@ -488,13 +501,17 @@ def main():
                         _project[_pj] = []
                     if _key not in _project[_pj]:
                         _project[_pj].append(_key)
-                    if _key not in _in_project:
-                        _in_project.append(_key)
 
-    for _key in _member:
-        if _key not in _in_project:
-            if _key not in _no_project:
-                _no_project.append(_key)
+    _projects = []
+    for _pj in _project:
+        _mem = ""
+        _cnt = 0
+        for _m in _project[_pj]:
+            _mem += (_m + '，')
+            _cnt += 1
+        _projects.append({ "project": u"%s" % _pj,
+                           "count": "%d" % _cnt,
+                           "member": u"%s" % _mem[:-1]})
 
     _used_cnt = 0
     _n_cnt = 0
@@ -522,6 +539,8 @@ def main():
         members=_members,
         list=_p,
         log=_member,
+        project_list=_projects,
+        project_stat=_project_stat,
     )
 
     context['total_count'] = _used_cnt + _n_cnt

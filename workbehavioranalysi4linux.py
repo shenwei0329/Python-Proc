@@ -436,6 +436,7 @@ def main():
         u"产品设计": u"产品相关",
         u"沃云": u"联通沃云",
         u"测试中心": u"测试",
+        u"卫士云": u"卫士云",
     }
 
     """从日志内容中识别项目信息"""
@@ -466,41 +467,54 @@ def main():
 
     _project = {}
     _project_stat = {}
-    _today = datetime.date.today()
-    st_date = int(datetime.date(_today.year - 1, _today.month).strftime("%Y%m"))
-    ed_date = int(datetime.date(_today.year, _today.month).strftime("%Y%m"))
+    _today = date.today()
+    st_date = int(date(_today.year - 1, _today.month, _today.day).strftime("%Y%m"))
+    ed_date = int(date(_today.year, _today.month, _today.day).strftime("%Y%m"))
 
     for _key in _member:
         for _r in _member[_key]:
+
+            _idx = int(_r['date'].replace('-', "")[:-2])
+            if (_idx < st_date) or (_idx >= ed_date):
+                continue
+
             for _pj in _project_alias:
+
                 if 'project' not in _r:
                     continue
-                if _pj in _r['project'].upper():
-                    _pj = _project_alias[_pj]
-                    _r['project'] = _pj
-                    if _pj not in _project:
-                        _project[_pj] = []
-                    if _key not in _project[_pj]:
-                        _project[_pj].append(_key)
-                    if _pj not in _project_stat:
-                        _project_stat[_pj] = {}
 
-                    _idx = int(_r['date'].replace('-', "")[:-2])
-                    if (_idx >= st_date) and (_idx < ed_date):
-                        if _idx not in _project_stat[_pj]:
-                            _project_stat[_pj][_idx] = 0
-                        _project_stat[_pj][_idx] += 1
+                if _pj in _r['project'].upper():
+
+                    _r['project'] = _project_alias[_pj]
+                    __pj = _project_alias[_pj]
+
+                    if __pj not in _project:
+                        _project[__pj] = []
+                    if _key not in _project[__pj]:
+                        _project[__pj].append(_key)
+
+                    if __pj not in _project_stat:
+                        _project_stat[__pj] = {}
+                    if _idx not in _project_stat[__pj]:
+                        _project_stat[__pj][_idx] = 0
+                    _project_stat[__pj][_idx] += 1
 
             for _pj in _project_alias_at_summary:
                 if 'summary' not in _r:
                     continue
                 if _pj in _r['summary'].upper():
-                    _pj = _project_alias_at_summary[_pj]
-                    _r['project'] = _pj
-                    if _pj not in _project:
-                        _project[_pj] = []
-                    if _key not in _project[_pj]:
-                        _project[_pj].append(_key)
+                    __pj = _project_alias_at_summary[_pj]
+                    _r['project'] = __pj
+                    if __pj not in _project:
+                        _project[__pj] = []
+                    if _key not in _project[__pj]:
+                        _project[__pj].append(_key)
+
+                    if __pj not in _project_stat:
+                        _project_stat[__pj] = {}
+                    if _idx not in _project_stat[__pj]:
+                        _project_stat[__pj][_idx] = 0
+                    _project_stat[__pj][_idx] += 1
 
     _projects = []
     for _pj in _project:

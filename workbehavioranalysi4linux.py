@@ -82,7 +82,7 @@ def inRegion(c_date, bg_date, end_date):
     :param end_date: 截止时间
     :return: True，表示落入；False，表示超出
     """
-
+    c_date = c_date.split(' ')[0]
     _date = time.mktime(time.strptime(c_date, '%Y-%m-%d'))
     _bg_date = time.mktime(time.strptime(bg_date, '%Y-%m-%d'))
     _end_date = time.mktime(time.strptime(end_date, '%Y-%m-%d'))
@@ -99,6 +99,7 @@ def beforeDate(c_date, o_date):
     :param o_date: 时间2
     :return: True，表示时间1早于时间2；False，表示时间1迟于时间2
     """
+    c_date = c_date.split(' ')[0]
     _c_date = time.mktime(time.strptime(c_date, '%Y-%m-%d'))
     _o_date = time.mktime(time.strptime(o_date, '%Y-%m-%d'))
     return _c_date <= _o_date
@@ -111,6 +112,7 @@ def afterDate(c_date, o_date):
     :param o_date: 时间2
     :return: True，表示时间1迟于时间2；False，表示时间1早于时间2
     """
+    c_date = c_date.split(' ')[0]
     if '-' not in o_date:
         return False
     if '-' not in c_date:
@@ -126,6 +128,7 @@ def formatDate(c_date):
     :param c_date:
     :return:
     """
+    c_date = c_date.split(' ')[0]
     _ti = time.strptime(c_date, '%Y-%m-%d')
     return time.strftime('%Y-%m-%d', _ti)
 
@@ -463,10 +466,15 @@ def main():
         u"综合作战": u"指挥",
         u"卫士通": u"卫士云",
         u"卫士云": u"卫士云",
+        u"【指挥】": u"指挥",
+        u"[指挥]": u"指挥",
+        u"指挥大厅": u"指挥",
+        u"指挥项目": u"指挥",
     }
 
     _project = {}
     _project_stat = {}
+    _project_member_stat = {}
     _today = date.today()
     st_date = int(date(_today.year - 1, _today.month, _today.day).strftime("%Y%m"))
     ed_date = int(date(_today.year, _today.month, _today.day).strftime("%Y%m"))
@@ -499,6 +507,14 @@ def main():
                         _project_stat[__pj][_idx] = 0
                     _project_stat[__pj][_idx] += 1
 
+                    if _key not in _project_member_stat:
+                        _project_member_stat[_key] = {}
+                    if __pj not in _project_member_stat[_key]:
+                        _project_member_stat[_key][__pj] = {}
+                    if _idx not in _project_member_stat[_key][__pj]:
+                        _project_member_stat[_key][__pj][_idx] = 0
+                    _project_member_stat[_key][__pj][_idx] += 1
+
             for _pj in _project_alias_at_summary:
                 if 'summary' not in _r:
                     continue
@@ -510,11 +526,25 @@ def main():
                     if _key not in _project[__pj]:
                         _project[__pj].append(_key)
 
+                    """总体的项目参与情况
+                    """
                     if __pj not in _project_stat:
                         _project_stat[__pj] = {}
                     if _idx not in _project_stat[__pj]:
                         _project_stat[__pj][_idx] = 0
+                    """项目-日期-计量"""
                     _project_stat[__pj][_idx] += 1
+
+                    """个人的项目参与情况
+                    """
+                    if _key not in _project_member_stat:
+                        _project_member_stat[_key] = {}
+                    if __pj not in _project_member_stat[_key]:
+                        _project_member_stat[_key][__pj] = {}
+                    if _idx not in _project_member_stat[_key][__pj]:
+                        _project_member_stat[_key][__pj][_idx] = 0
+                    """员工-项目-日期-计量"""
+                    _project_member_stat[_key][__pj][_idx] += 1
 
     _projects = []
     for _pj in _project:
@@ -555,6 +585,7 @@ def main():
         log=_member,
         project_list=_projects,
         project_stat=_project_stat,
+        project_member_stat=_project_member_stat,
     )
 
     context['total_count'] = _used_cnt + _n_cnt

@@ -23,7 +23,6 @@ import DataHandler.crWord
 from pylab import mpl
 from datetime import datetime, date, timedelta
 import time
-from DataHandler import redis_class
 
 
 """设置字符集
@@ -117,6 +116,8 @@ def inRegion(c_date, bg_date, end_date):
     :return: True，表示落入；False，表示超出
     """
 
+    c_date = c_date.split(' ')[0]
+    # print("c_date= %s" % c_date)
     _date = time.mktime(time.strptime(c_date, '%Y-%m-%d'))
     _bg_date = time.mktime(time.strptime(bg_date, '%Y-%m-%d'))
     _end_date = time.mktime(time.strptime(end_date, '%Y-%m-%d'))
@@ -160,6 +161,7 @@ def formatDate(c_date):
     :param c_date:
     :return:
     """
+    c_date = c_date.split(' ')[0]
     _ti = time.strptime(c_date, '%Y-%m-%d')
     return time.strftime('%Y-%m-%d', _ti)
 
@@ -292,9 +294,10 @@ def loadMembers():
     """
     _members = []
     _f = open('org_member.txt', "rb")
+    _s = _f.readline()
     while True:
         _s = _f.readline()
-        _s = _s.decode("gbk").encode("utf8")
+        # _s = _s.decode("gbk").encode("utf8")
         _s = _s.replace('\n', '').replace('\r', '')
         if _s is None:
             return _members
@@ -350,15 +353,15 @@ def main():
 
     _member = {}
 
-    key_member = redis_class.KeyLiveClass('personal')
-
     if len(args) == 0:
         _members = loadMembers()
         print _members
     else:
         _members = []
         for _p in args:
-            _members.append(_p.decode("gbk").encode("utf8"))
+            # _members.append(_p.decode("ch_CN").encode("utf8"))
+            print(u">>> %s" % _p)
+            _members.append(_p)
 
     _lvl = 1
     for _p in _members:

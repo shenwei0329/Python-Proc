@@ -4,6 +4,7 @@ import win32gui
 import win32con
 import win32api
 import sys
+import os
 from win32con import *
 import doXLSX4ext_org
 
@@ -17,11 +18,20 @@ sys.setdefaultencoding('utf-8')
 
 def fileHandler(_file):
 
-    if (('.xlsx' in _file) and ('.xls' in _file)) and ('~$' not in _file):
+    if (('.xlsx' in _file) or ('.xls' in _file)) and ('~$' not in _file):
         doXLSX4ext_org.main(_file)
     else:
         print "Invalid file: ", _file
         return
+
+
+def scan_files(directory):
+    files_list = []
+
+    for root, sub_dirs, files in os.walk(directory):
+        for special_file in files:
+            files_list.append(os.path.join(root, special_file))
+    return files_list
 
 
 def WndProc(hwnd, msg, wParam, lParam):
@@ -40,7 +50,14 @@ def WndProc(hwnd, msg, wParam, lParam):
         filescount = win32api.DragQueryFile(hDropInfo)
         for i in range(filescount):
             filename = win32api.DragQueryFile(hDropInfo, i)
-            fileHandler(filename)
+            if os.path.isdir(filename):
+                _files = scan_files(filename)
+            else:
+                _files = [filename]
+
+            if len(_files) > 0:
+                for _f in _files:
+                    fileHandler(_f)
         win32api.DragFinish(hDropInfo)
 
     return win32gui.DefWindowProc(hwnd,msg,wParam,lParam)  

@@ -8,22 +8,23 @@
 from email.parser import Parser
 from email.header import decode_header
 from email.utils import parseaddr
+import datetime
 import poplib
+import base64
 import sys
-from datetime import datetime, date, timedelta
-
+ 
 
 def parser_date(msg):
-
     _date = msg.get('date').split(',')[1][1:]
-    if ',' in _date:
-        _date = _date.split(', ')[1]
     utcstr = _date.replace('+00:00','').replace(' (CST)','')
     print utcstr
     try:
-        utcdatetime = datetime.strptime(utcstr, '%d %b %Y %H:%M:%S +0000 (GMT)')
+        utcdatetime = datetime.datetime.strptime(utcstr, '%d %b %Y %H:%M:%S +0000 (GMT)')
+        localdatetime = utcdatetime + datetime.timedelta(hours=+8)
+        # localtimestamp = localdatetime.timestamp()
     except:
-        utcdatetime = datetime.strptime(utcstr, '%d %b %Y %H:%M:%S +0800')
+        utcdatetime = datetime.datetime.strptime(utcstr, '%d %b %Y %H:%M:%S +0800')
+        # localtimestamp = utcdatetime.timestamp()
     ti = utcdatetime
     return "%04d%02d%02d" % (ti.year, ti.month, ti.day)
 
@@ -74,11 +75,9 @@ def parser_content(msg, idx):
             f.close()
 
 
-yesterday = date.today() + timedelta(days=-1)
-_arg_date = yesterday.strftime("%Y%m%d")
-
+_arg_date = sys.argv[1].replace('-','')
 email = "shenwei@chinacloud.com.cn"
-password = sys.argv[1]
+password = sys.argv[2]
 pop3_server = "pop.chinacloud.com.cn"
  
 server = poplib.POP3_SSL(pop3_server)

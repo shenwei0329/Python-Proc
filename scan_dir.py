@@ -3,6 +3,7 @@
 
 import os
 
+
 def scan_files(directory,prefix=None,postfix=None):
     files_list=[]
     
@@ -18,6 +19,7 @@ def scan_files(directory,prefix=None,postfix=None):
                 files_list.append(os.path.join(root,special_file))
                           
     return files_list
+
 
 if __name__ == '__main__':
 

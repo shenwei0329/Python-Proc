@@ -28,6 +28,8 @@ special_file_name = {u'部署实施': 'devops_task',
                      u'devops': 'devops_task',
                      u'【公安】运维': 'ops_task',
                      u'【运维】北区': 'ops_task_bj',
+                     u'【北区】运维': 'ops_task_bj',
+                     u"outfile_": 'git_log',
                      }
 
 
@@ -51,6 +53,7 @@ class XlsxHandler:
 
     def isSpecial(self):
         for _f in special_file_name:
+            print _f, self.filen
             if _f in self.filen:
                 self.table_name = special_file_name[_f]
                 return True
@@ -88,13 +91,11 @@ class XlsxHandler:
 
     def getXlsxColStr(self):
 
-        # print(">>> getXlsxColStr: %d" % self.table.ncols)
+        print(">>> getXlsxColStr: %d" % self.table.ncols)
         _col = self.getXlsxColName(self.table.ncols)
 
-        """
         for _c in _col:
             print(u"%s" % _c)
-        """
 
         _str = ""
         for _s in _col:
@@ -159,7 +160,15 @@ class XlsxHandler:
         for _i in range(nCol):
             __row = self.table.row_values(i)[_i]
             __ctype = self.table.cell(i, _i).ctype
-            # print __row,__ctype
+
+            try:
+                print "getXlsxRow: ", __row, __ctype
+            except Exception, e:
+                print e
+                __row = "*"
+            finally:
+                __row = __row
+
             if __ctype == 3:
                 _date = datetime(*xlrd.xldate_as_tuple(__row, 0))
                 __row = _date.strftime('%Y/%m/%d')
@@ -170,9 +179,15 @@ class XlsxHandler:
                 # __row = str(__row).replace('.0', '')
             elif __ctype == 5:
                 __row = ''
-            _row.append(__row)
+            try:
+                _row.append(__row)
+            except Exception, e:
+                print e
+                _row.append("*")
+            finally:
+                __row = ""
 
-        # print _row
+        print ">>> ", _row
 
         row = []
         _i = 0
@@ -250,7 +265,8 @@ def main(filename):
         logging.log(logging.WARN, ">>> 2.")
 
         _str, _ncols = xlsx_handler.getXlsxColStr()
-
+        print _str
+        print _ncols
         # _table = "star_task"
         _table = xlsx_handler.getTableName()
 

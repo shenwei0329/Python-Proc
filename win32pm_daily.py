@@ -70,6 +70,7 @@ def fileHandler(hwnd, _file):
 
         _doc = docx.Document(_file)
 
+        _total_target_lvl = 1.1
         _daily = {}
         for para in _doc.paragraphs:
 
@@ -78,37 +79,68 @@ def fileHandler(hwnd, _file):
             if "Title" in para.style.name:
                 _daily['title'] = {"alias": _params[0], "project_id": _params[2]}
             else:
-                if "Normal" in para.style.name:
+                if para.style.name in ["Normal", "List Paragraph"]:
+
                     if _heading_lvl == 0 and u"日报" in para.text:
                         _text_lvl = 1
                         _daily['title']['date'] = _params[0]
                     elif _heading_lvl == 1:
 
-                        if para.style.name in "List Paragraph":
-                            show_message(hwnd, u"文档正文【总体目标】格式错误！")
-                            return
-
                         if 'total_target' not in _daily:
                             _daily['total_target'] = []
-                        if len(_params) == 4:
-                            _daily['total_target'].append({'id': _params[0],
-                                                           'summary': _params[1],
-                                                           'date': _params[2],
-                                                           'percent': _params[3],
-                                                           'daily_date': _daily['title']['date']
-                                                           })
-                        elif len(_params) == 6:
-                            _daily['total_target'].append({'id': _params[0],
-                                                           'summary': _params[1],
-                                                           'requirement': _params[2],
-                                                           'method': _params[3],
-                                                           'date': _params[4],
-                                                           'percent': _params[5],
-                                                           'daily_date': _daily['title']['date']
-                                                           })
+
+                        if para.style.name in "List Paragraph":
+                            print ">>> %0.1f <<< %d" % (_total_target_lvl, len(_params))
+                            if len(_params) == 3:
+                                _daily['total_target'].append({'id': "%0.1f" % _total_target_lvl,
+                                                               'summary': _params[0],
+                                                               'date': _params[1],
+                                                               'percent': _params[2],
+                                                               'daily_date': _daily['title']['date']
+                                                               })
+                            elif len(_params) == 5:
+                                _daily['total_target'].append({'id': "%0.1f" % _total_target_lvl,
+                                                               'summary': _params[0],
+                                                               'requirement': _params[1],
+                                                               'method': _params[2],
+                                                               'date': _params[3],
+                                                               'percent': _params[4],
+                                                               'daily_date': _daily['title']['date']
+                                                               })
+                            elif len(_params) == 4:
+                                print _params
+                                _daily['total_target'].append({'id': "%0.1f" % _total_target_lvl,
+                                                               'summary': _params[0],
+                                                               'requirement': _params[1],
+                                                               'method': "",
+                                                               'date': _params[2],
+                                                               'percent': _params[3],
+                                                               'daily_date': _daily['title']['date']
+                                                               })
+                            else:
+                                show_message(hwnd, u"文档正文【目标】格式错误！")
+                                return
+                            _total_target_lvl += 0.1
                         else:
-                            show_message(hwnd, u"文档正文【目标】格式错误！")
-                            return
+                            if len(_params) == 4:
+                                _daily['total_target'].append({'id': _params[0],
+                                                               'summary': _params[1],
+                                                               'date': _params[2],
+                                                               'percent': _params[3],
+                                                               'daily_date': _daily['title']['date']
+                                                               })
+                            elif len(_params) == 6:
+                                _daily['total_target'].append({'id': _params[0],
+                                                               'summary': _params[1],
+                                                               'requirement': _params[2],
+                                                               'method': _params[3],
+                                                               'date': _params[4],
+                                                               'percent': _params[5],
+                                                               'daily_date': _daily['title']['date']
+                                                               })
+                            else:
+                                show_message(hwnd, u"文档正文【目标】格式错误！")
+                                return
 
                     elif _heading_lvl == 2:
 

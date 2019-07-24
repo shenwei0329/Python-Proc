@@ -12,46 +12,8 @@ from email.header import decode_header
 from email.utils import parseaddr
 import poplib
 import sys
-import os
 from datetime import datetime, date, timedelta
-import platform
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
-import base64
-
-
-def send_mail(server, consignee, title, text, files=[], timeout=180, subtype='plain'):
-    """
-    发送邮件
-    :param server: 邮件服务器属性
-    :param consignee: 收件人
-    :param title: 标题
-    :param text: 正文
-    :param files: 附件
-    :param timeout: 超时
-    :return:
-    """
-    msg = MIMEMultipart()
-    msg['From'] = server['user']
-    msg['Subject'] = title
-    msg['To'] = ",".join(consignee)
-    msg.attach(MIMEText(text, _subtype=subtype, _charset='utf-8'))
-    if "Linux" == platform.system():
-        coding = 'utf-8'
-    else:
-        coding = 'gbk'
-    for file in files:
-        part = MIMEBase('application', 'octet-stream')
-        part.set_payload(open(file, 'rb').read())
-        part.add_header('Content-Disposition', 'attachment', filename="=?utf-8?b?%s?=" % base64.b64encode(
-            os.path.basename(file).decode(coding).encode('utf-8')))
-        msg.attach(part)
-    smtp = smtplib.SMTP(server['host'], server['port'] if server.get('port') else 0, timeout=timeout)
-    smtp.login(server['user'], server['passwd'])
-    smtp.sendmail(server['user'], consignee, msg.as_string())
-    smtp.close()
+import pm_daily
 
 
 def parser_date(msg):
@@ -81,7 +43,7 @@ def parser_subject(msg):
     """
     subject = msg['Subject']
     value, charset = decode_header(subject)[0]
-    # print value, charset
+    print value, charset
     if charset:
         value = value.decode(charset)
     print(u'subject: {0}'.format(value))
@@ -127,6 +89,9 @@ def parser_content(msg, _cr_date, _sender):
                 f = open("files/%s-%s-ref" % (_cr_date, _sender), "wb")
             f.write(data)
             f.close()
+            if u"项目日报" in f_name:
+                print "pm_daily.file_handler:",f_name
+                pm_daily.file_handler("files/%s" % f_name)
 
         else:
             _datas = par.get_payload(decode=True)
@@ -158,7 +123,7 @@ resp, mails, octets = server.list()
 
 _index = len(mails)
 _err = False
-for _idx in range(_index, 0, -1):
+for _idx in range(_index,0,-1):
 
     # print(u"第%d封邮件：\n" % _idx)
     # print("="*80)
@@ -177,10 +142,7 @@ for _idx in range(_index, 0, -1):
         server.pass_(password)
     finally:
         if not _err:
-            if "Linux" == platform.system():
-                msg_content = b"\r\n".join(lines).decode("utf-8")
-            else:
-                msg_content = b"\r\n".join(lines).decode("gbk")
+            msg_content = b"\r\n".join(lines).decode("gbk")
             try:
                 msg = Parser().parsestr(msg_content)
             except Exception, e:

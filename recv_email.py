@@ -42,9 +42,10 @@ def parser_subject(msg):
     """
     subject = msg['Subject']
     value, charset = decode_header(subject)[0]
+    # print value, charset
     if charset:
         value = value.decode(charset)
-    print('subject: {0}'.format(value))
+    print(u'subject: {0}'.format(value))
     return value
  
 

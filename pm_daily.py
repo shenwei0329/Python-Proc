@@ -45,7 +45,7 @@ def build_id(params):
 def file_handler(_file):
 
     _short_file = _file.split("\\")[-1]
-    print "fileHandler: ", _short_file
+    # print "fileHandler: ", _short_file
 
     if ('.docx' not in _short_file) and ('.doc' in _short_file):
         print "Invalid file name: ", _short_file
@@ -81,7 +81,7 @@ def file_handler(_file):
                             _daily['total_target'] = []
 
                         if para.style.name in "List Paragraph":
-                            print ">>> %0.1f <<< %d" % (_total_target_lvl, len(_params))
+                            # print ">>> %0.1f <<< %d" % (_total_target_lvl, len(_params))
                             if len(_params) == 3:
                                 _daily['total_target'].append({'id': "%0.1f" % _total_target_lvl,
                                                                'summary': _params[0],
@@ -99,7 +99,7 @@ def file_handler(_file):
                                                                'daily_date': _daily['title']['date']
                                                                })
                             elif len(_params) == 4:
-                                print _params
+                                # print _params
                                 _daily['total_target'].append({'id': "%0.1f" % _total_target_lvl,
                                                                'summary': _params[0],
                                                                'requirement': _params[1],
@@ -159,9 +159,18 @@ def file_handler(_file):
                                                            'percent': _params[6],
                                                            'daily_date': _daily['title']['date']
                                                            })
+                        elif len(_params) >=6:
+                            _daily['stage_target'].append({'sub_id': _params[0],
+                                                           'id': _params[1],
+                                                           'summary': _params[2],
+                                                           'requirement': _params[3],
+                                                           'method': _params[4],
+                                                           'date': _params[5],
+                                                           'daily_date': _daily['title']['date']
+                                                           })
                         else:
                             # show_message(hwnd, u"文档正文【阶段目标】格式错误！")
-                            print _params
+                            print(u"文档正文【阶段目标】参数个数错误！<%d>" % len(_params))
 
                     elif _heading_lvl == 3:
 

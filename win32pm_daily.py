@@ -16,6 +16,8 @@ import uuid
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+mongo_db = mongodb_class.mongoDB('PM_DAILY')
+
 
 def getParam(text):
 
@@ -61,8 +63,6 @@ def fileHandler(hwnd, _file):
         return
     else:
 
-        mongo_db = mongodb_class.mongoDB('PM_DAILY')
-
         _heading_lvl = 0
         _step = -1
         _desc = ""
@@ -79,7 +79,8 @@ def fileHandler(hwnd, _file):
             if "Title" in para.style.name:
                 _daily['title'] = {"alias": _params[0], "project_id": _params[2]}
             else:
-                if para.style.name in ["Normal", "List Paragraph"]:
+                print para.style.name
+                if para.style.name in ["Normal", "List Paragraph", "Body"]:
 
                     if _heading_lvl == 0 and u"日报" in para.text:
                         _text_lvl = 1
@@ -89,7 +90,7 @@ def fileHandler(hwnd, _file):
                         if 'total_target' not in _daily:
                             _daily['total_target'] = []
 
-                        if para.style.name in "List Paragraph":
+                        if para.style.name in ["List Paragraph", "Heading"]:
                             print ">>> %0.1f <<< %d" % (_total_target_lvl, len(_params))
                             if len(_params) == 3:
                                 _daily['total_target'].append({'id': "%0.1f" % _total_target_lvl,
@@ -144,7 +145,7 @@ def fileHandler(hwnd, _file):
 
                     elif _heading_lvl == 2:
 
-                        if para.style.name in "List Paragraph":
+                        if para.style.name in ["List Paragraph"]:
                             show_message(hwnd, u"文档正文【阶段目标】格式错误！")
                             return
 
@@ -174,7 +175,7 @@ def fileHandler(hwnd, _file):
 
                     elif _heading_lvl == 3:
 
-                        if para.style.name in "List Paragraph":
+                        if para.style.name in ["List Paragraph"]:
                             show_message(hwnd, u"文档正文【今日工作汇报】格式错误！")
                             return
 
@@ -190,7 +191,7 @@ def fileHandler(hwnd, _file):
                                                     })
                     elif _heading_lvl == 4:
 
-                        if para.style.name in "List Paragraph":
+                        if para.style.name in ["List Paragraph"]:
                             show_message(hwnd, u"文档正文【明日工作计划】格式错误！")
                             return
 
@@ -237,7 +238,7 @@ def fileHandler(hwnd, _file):
                             _step = 0
                         _daily['other'].append(para.text)
 
-                if "Heading 1" in para.style.name:
+                if "Heading 1" in para.style.name or "Heading" in para.style.name:
                     if u"总体目标" in para.text:
                         _heading_lvl = 1
                         """总体目标完成百分比"""
@@ -262,6 +263,7 @@ def fileHandler(hwnd, _file):
 
         """去重：是否已录入"""
         _t = mongo_db.handler("pm_daily", "find_one", _daily['title'])
+        print _daily['title']
         if _t is None:
             """记录项目标题"""
             mongo_db.handler("pm_daily", "insert", _daily['title'])

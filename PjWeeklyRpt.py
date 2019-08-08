@@ -112,11 +112,13 @@ def _print(_str, title=False, title_lvl=0, color=None, align=None, paragrap=None
     return _paragrap
 
 
-def build_sql(field, bg_date, ed_date):
+def build_sql(field, bg_date, ed_date, opt_sql=None):
     _sql = {'$and': [
         {field: {'$gte': bg_date.replace('-', '').replace('/', '')}},
         {field: {'$lte': ed_date.replace('-', '').replace('/', '')}}
     ]}
+    if opt_sql is not None:
+        _sql['$and'].append(opt_sql)
     return _sql
 
 
@@ -154,6 +156,7 @@ def main():
 
     _pj = {}
     for _r in _rec:
+        # print(u"%s: %s" % (_r['project_id'], _r['alias']))
         if _r['project_id'] not in _pj:
             _pj[_r['project_id']] = {}
             _pj[_r['project_id']]['alias'] = _r['alias']
@@ -161,15 +164,19 @@ def main():
             _pj[_r['project_id']]['date'] = []
         _pj[_r['project_id']]['date'].append(_r['date'])
 
-    _rec = db.handler("total_target", "find", {})
+    _sql = build_sql("daily_date", sys.argv[1], sys.argv[2])
+    _rec = db.handler("total_target", "find", _sql)
+    print(">>>_sql: %s %d" % (_sql, _rec.count()))
     for _r in _rec:
+        if sys.argv[1][:5] not in _r['date']:
+            continue
         if _r['project_id'] not in _pj:
-            print(">>> Error: total_target[%s] not in pm_daily" % _r['project_id'])
+            print(u">>> Error: total_target[%s:%s] not in pm_daily" % (_r['project_id'], _r['alias']))
             continue
         if 'id' not in _pj[_r['project_id']]:
             _pj[_r['project_id']]['id'] = {}
 
-        _r['id'] = _r['id']
+        # _r['id'] = _r['id']
         if _r['id'] not in _pj[_r['project_id']]['id']:
             _pj[_r['project_id']]['id'][_r['id']] = {
                 'summary': _r['summary'],
@@ -192,6 +199,7 @@ def main():
             _pg_list = _pg
         _lvl += 1
 
+        print(">>> project_id: %s" % _p)
         _rec = db.handler("stage_target", "find", {'project_id': _p})
         _stage = {}
         for _r in _rec:
@@ -200,7 +208,7 @@ def main():
             if _r['sub_id'] not in _stage[_r['id']]:
                 _stage[_r['id']][_r['sub_id']] = {'percent': []}
 
-            if '%' in _r['percent']:
+            if "percent" in _r and '%' in _r['percent']:
                 _pct = (_r['percent'].split('%')[0]).split('.')[0]
             else:
                 _pct = '0'
@@ -210,60 +218,63 @@ def main():
 
         _print(u"一、目标完成情况", title=True, title_lvl=3)
 
-        for _id in sorted(_pj[_p]['id'], key=lambda x: int(x.split('.')[1])):
-            _pct = sorted(_pj[_p]['id'][_id]['percent'], key=lambda x: int(x))
+        if "id" in _pj[_p]:
+            for _id in sorted(_pj[_p]['id'], key=lambda x: int(x.split('.')[1])):
+                _pct = sorted(_pj[_p]['id'][_id]['percent'], key=lambda x: int(x))
 
-            _print(u"\t%s）%s" % (_id, _pj[_p]['id'][_id]['summary']), title=True, title_lvl=3)
+                _print(u"\t%s）%s" % (_id, _pj[_p]['id'][_id]['summary']), title=True, title_lvl=3)
 
-            if _pct[0] != _pct[-1]:
-                _print(u"计划完成时间：%s，本周完成率从 %s%% 变为 %s%% 。" % (
-                    _pj[_p]['id'][_id]['date'],
-                    _pct[0],
-                    _pct[-1]),
-                       color=(0, 100, 0)
-                )
-            else:
-                if int(_pct[0]) == 100:
-                    _print(u"计划完成时间：%s，目标已完成。" % (
-                        _pj[_p]['id'][_id]['date'])
-                           )
-                else:
-                    _print(u"计划完成时间：%s，本周没有进展，完成率仍保持在%s%% 。" % (
-                        _pj[_p]['id'][_id]['date'],
-                        _pct[0]),
-                           color=(255, 0, 0)
-                           )
-
-            if _id not in _stage:
-                continue
-
-            if len(_stage) == 0:
-                continue
-
-            _print(u"包含的阶段目标有：")
-            for _sub in sorted(_stage[_id], key=lambda x: int(x.split('.')[1])):
-                _pct = sorted(_stage[_id][_sub]['percent'], key=lambda x: int(x))
                 if _pct[0] != _pct[-1]:
-                    _print(u"\t● 阶段目标：%s，计划完成实现：%s，本周完成率从 %s%% 变为 %s%% 。" % (
-                        _stage[_id][_sub]['summary'],
-                        _stage[_id][_sub]['date'],
+                    _print(u"计划完成时间：%s，本周完成率从 %s%% 变为 %s%% 。" % (
+                        _pj[_p]['id'][_id]['date'],
                         _pct[0],
                         _pct[-1]),
-                           color=(0, 10, 0)
-                           )
+                           color=(0, 100, 0)
+                    )
                 else:
                     if int(_pct[0]) == 100:
-                        _print(u"\t● 阶段目标：%s，计划完成实现：%s，目标已完成。" % (
-                            _stage[_id][_sub]['summary'],
-                            _stage[_id][_sub]['date'])
-                        )
+                        _print(u"计划完成时间：%s，目标已完成。" % (
+                            _pj[_p]['id'][_id]['date'])
+                               )
                     else:
-                        _print(u"\t● 阶段目标：%s，计划完成实现：%s，本周没有进展，完成率仍保持在%s%% 。" % (
+                        _print(u"计划完成时间：%s，本周没有进展，完成率仍保持在%s%% 。" % (
+                            _pj[_p]['id'][_id]['date'],
+                            _pct[0]),
+                               color=(255, 0, 0)
+                               )
+
+                if _id not in _stage:
+                    continue
+
+                if len(_stage) == 0:
+                    continue
+
+                _print(u"包含的阶段目标有：")
+                for _sub in sorted(_stage[_id], key=lambda x: int(x.split('.')[1])):
+                    _pct = sorted(_stage[_id][_sub]['percent'], key=lambda x: int(x))
+                    if _pct[0] != _pct[-1]:
+                        _print(u"\t● 阶段目标：%s，计划完成实现：%s，本周完成率从 %s%% 变为 %s%% 。" % (
                             _stage[_id][_sub]['summary'],
                             _stage[_id][_sub]['date'],
-                            _pct[0]),
-                            color=(255, 0, 0)
+                            _pct[0],
+                            _pct[-1]),
+                               color=(0, 10, 0)
                                )
+                    else:
+                        if int(_pct[0]) == 100:
+                            _print(u"\t● 阶段目标：%s，计划完成实现：%s，目标已完成。" % (
+                                _stage[_id][_sub]['summary'],
+                                _stage[_id][_sub]['date'])
+                            )
+                        else:
+                            _print(u"\t● 阶段目标：%s，计划完成实现：%s，本周没有进展，完成率仍保持在%s%% 。" % (
+                                _stage[_id][_sub]['summary'],
+                                _stage[_id][_sub]['date'],
+                                _pct[0]),
+                                color=(255, 0, 0)
+                                   )
+        else:
+            _print(u"无时间计划。")
 
         _print(u"二、任务完成情况", title=True, title_lvl=3)
 
@@ -329,52 +340,65 @@ def main():
 
         _print(u"三、本周风险", title=True, title_lvl=3)
 
-        _rec = db.handler("risk", "find", {'project_id': _p})
+        _sql = build_sql("daily_date", sys.argv[1], sys.argv[2], opt_sql={'project_id': _p})
+        _rec = db.handler("risk", "find", _sql)
         if _rec.count() == 0:
             _print(u"无。")
         else:
             _risk = {}
             for _r in _rec:
+                _str = _r["desc"].replace(" ", "")
+                if len(_str) == 0:
+                    continue
                 if _r["desc"] not in _risk:
                     _risk[_r["desc"]] = _r['way']
 
-            doc.addTable(1, 2, col_width=(3, 4))
-            _title = (
-                      ('text', u'风险'),
-                      ('text', u'解决办法'),
-                      )
-            doc.addRow(_title)
+            if len(_risk) == 0:
+                _print(u"无。")
+            else:
+                doc.addTable(1, 2, col_width=(3, 4))
+                _title = (
+                          ('text', u'风险'),
+                          ('text', u'解决办法'),
+                          )
+                doc.addRow(_title)
 
-            for _r in _risk:
-                _text = (
-                    ('text', _r),
-                    ('text', _risk[_r])
-                )
-                doc.addRow(_text)
+                for _r in _risk:
+                    _text = (
+                        ('text', _r),
+                        ('text', _risk[_r])
+                    )
+                    doc.addRow(_text)
 
         _print(u"四、本周问题", title=True, title_lvl=3)
-        _rec = db.handler("problem", "find", {'project_id': _p})
+        _rec = db.handler("problem", "find", _sql)
         if _rec.count() == 0:
             _print(u"无。")
         else:
             _problem = {}
             for _r in _rec:
+                _str = _r["desc"].replace(" ", "")
+                if len(_str) == 0:
+                    continue
                 if _r["desc"] not in _problem:
                     _problem[_r["desc"]] = _r['way']
 
-            doc.addTable(1, 2, col_width=(3, 4))
-            _title = (
-                      ('text', u'问题'),
-                      ('text', u'解决办法'),
-                      )
-            doc.addRow(_title)
+            if len(_problem) == 0:
+                _print(u"无。")
+            else:
+                doc.addTable(1, 2, col_width=(3, 4))
+                _title = (
+                          ('text', u'问题'),
+                          ('text', u'解决办法'),
+                          )
+                doc.addRow(_title)
 
-            for _r in _problem:
-                _text = (
-                    ('text', _r),
-                    ('text', _problem[_r])
-                )
-                doc.addRow(_text)
+                for _r in _problem:
+                    _text = (
+                        ('text', _r),
+                        ('text', _problem[_r])
+                    )
+                    doc.addRow(_text)
 
         doc.addPageBreak()
 
